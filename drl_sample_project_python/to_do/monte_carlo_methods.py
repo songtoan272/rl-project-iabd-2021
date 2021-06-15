@@ -1,5 +1,5 @@
 from drl_sample_project_python.do_not_touch.result_structures import PolicyAndActionValueFunction
-# from drl_sample_project_python.do_not_touch.single_agent_env_wrapper import Env2
+from drl_sample_project_python.do_not_touch.single_agent_env_wrapper import Env2
 from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
 from drl_sample_project_python.to_do.single_agent.env_tictactoe_single_agent import EnvTicTacToeSingleAgent
 import numpy as np
@@ -134,7 +134,6 @@ def on_policy_first_visit_monte_carlo_control(
 def off_policy_monte_carlo_control(
         env: SingleAgentEnv,
         gamma: float,
-        eps: float,
         max_iter: int
 ) -> PolicyAndActionValueFunction:
     """
@@ -249,52 +248,61 @@ def off_policy_monte_carlo_control_on_tic_tac_toe_solo(
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
     env = EnvTicTacToeSingleAgent() if env is None else env
-    return off_policy_monte_carlo_control(env, gamma, eps, max_iter)
+    return off_policy_monte_carlo_control(env, gamma, max_iter)
 
 
-def monte_carlo_es_on_secret_env2() -> PolicyAndActionValueFunction:
+def monte_carlo_es_on_secret_env2(
+        env: EnvTicTacToeSingleAgent = None,
+        gamma: float = 0.9999,
+        max_iter: int = 10000) -> PolicyAndActionValueFunction:
     """
     Creates a Secret Env2
     Launches a Monte Carlo ES (Exploring Starts) in order to find the optimal Policy and its action-value function
     Returns the Optimal Policy (Pi(s,a)) and its Action-Value function (Q(s,a))
     """
-    env = Env2()
-    # TODO
-    pass
+    env = Env2() if env is None else env
+    return monte_carlo_es(env, gamma=gamma, max_iter=max_iter)
 
 
-def on_policy_first_visit_monte_carlo_control_on_secret_env2() -> PolicyAndActionValueFunction:
+
+def on_policy_first_visit_monte_carlo_control_on_secret_env2(
+        env: EnvTicTacToeSingleAgent = None,
+        gamma: float = 0.9999,
+        eps: float = 0.1,
+        max_iter: int = 10000) -> PolicyAndActionValueFunction:
     """
     Creates a Secret Env2
     Launches an On Policy First Visit Monte Carlo Control algorithm in order to find the optimal epsilon-greedy Policy and its action-value function
     Returns the Optimal epsilon-greedy Policy (Pi(s,a)) and its Action-Value function (Q(s,a))
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
-    env = Env2()
-    # TODO
-    pass
+    env = Env2() if env is None else env
+    return on_policy_first_visit_monte_carlo_control(env, gamma=gamma, eps=eps, max_iter=max_iter)
 
 
-def off_policy_monte_carlo_control_on_secret_env2() -> PolicyAndActionValueFunction:
+def off_policy_monte_carlo_control_on_secret_env2(
+        env: EnvTicTacToeSingleAgent = None,
+        gamma: float = 0.9999,
+        eps: float = 0.1,
+        max_iter: int = 10000) -> PolicyAndActionValueFunction:
     """
     Creates a Secret Env2
     Launches an Off Policy Monte Carlo Control algorithm in order to find the optimal greedy Policy and its action-value function
     Returns the Optimal Policy (Pi(s,a)) and its Action-Value function (Q(s,a))
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
-    env = Env2()
-    # TODO
-    pass
+    env = Env2() if env is None else env
+    return off_policy_monte_carlo_control(env, gamma=gamma, max_iter=max_iter)
 
 
 def demo():
-    print(monte_carlo_es_on_tic_tac_toe_solo())
-    print(on_policy_first_visit_monte_carlo_control_on_tic_tac_toe_solo())
-    print(off_policy_monte_carlo_control_on_tic_tac_toe_solo())
-    #
-    # print(monte_carlo_es_on_secret_env2())
-    # print(on_policy_first_visit_monte_carlo_control_on_secret_env2())
-    # print(off_policy_monte_carlo_control_on_secret_env2())
+    # print(monte_carlo_es_on_tic_tac_toe_solo())
+    # print(on_policy_first_visit_monte_carlo_control_on_tic_tac_toe_solo())
+    # print(off_policy_monte_carlo_control_on_tic_tac_toe_solo())
+
+    print(monte_carlo_es_on_secret_env2())
+    print(on_policy_first_visit_monte_carlo_control_on_secret_env2())
+    print(off_policy_monte_carlo_control_on_secret_env2())
 
 if __name__ == "__main__":
     demo()
