@@ -4,7 +4,7 @@ from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
 
 
 class EnvTicTacToeSingleAgent(SingleAgentEnv):
-    def __init__(self, max_steps: int):
+    def __init__(self, max_steps: int = 9):
         assert(max_steps > 0)
         self.game_over = False
         self.current_score = 0.0
@@ -24,12 +24,24 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
 
         return int(num)
 
+    def from_state(self, state_id):
+        state_id = str(state_id)
+        for b in range(len(state_id)):
+            if state_id[b] == '1':
+                self.board[b] = 0
+            elif state_id[b] == '2':
+                self.board[b] = 1
+            else:
+                self.board[b] = 10
+                
     def is_game_over(self) -> bool:
         return self.game_over
 
     def act_with_action_id(self, action_id: int):
         assert(not self.game_over)
         assert(action_id in [0, 1, 2, 3, 4, 5, 6, 7, 8])
+
+        # Agent plays
         self.board[action_id] = 1
 
         r0 = self.board[0] + self.board[1] + self.board[2]
@@ -56,6 +68,11 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
         if board_full:
             self.game_over = True
 
+        self.current_step += 1
+        if self.current_step >= self.max_steps:
+            self.game_over = True
+
+        # Concurrent plays randomly
         if not self.game_over:
             a = random.choice(self.available_actions_ids())
 
@@ -89,6 +106,17 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
         if self.current_step >= self.max_steps:
             self.game_over = True
 
+    def view(self):
+        res = "-" * 10
+        board_str = ['X' if b == 1 else ('O' if b == 10 else '_') for b in self.board]
+        for idx, b in enumerate(board_str):
+            if idx % 3 == 0:
+                res += '\n'
+            res += b + ' '*3
+        res += '\n' + '-' * 10
+        print(res)
+
+
     def score(self) -> float:
         return self.current_score
 
@@ -118,11 +146,46 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
         self.board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     def reset_random(self):
-        self.game_over = False
-        self.current_step = 0
-        self.current_score = 0.0
+        self.reset()
         c = [0, 1, 10]
-        self.board = [random.choice(c), random.choice(c), random.choice(c),
-                      random.choice(c), random.choice(c), random.choice(c),
-                      random.choice(c), random.choice(c), random.choice(c)]
+        nb_steps = np.random.default_rng().integers(0, self.max_steps, size=1)[0]
+        for s in range(0, nb_steps, 2):
+            if not self.game_over:
+                self.act_with_action_id(random.choice(self.available_actions_ids()))
+    
+    def gen_episode(self, pi, returns, q):
+        S = []
+        A = []
+        R = []
+        while not self.is_game_over():
+            s = self.state_id()
+            S.append(s)
+            available_actions = self.available_actions_ids()
+            if s not in pi:
+                pi[s] = {}
+                q[s] = {}
+                returns[s] = {}
+                for a in available_actions:
+                    pi[s][a] = 1.0 / len(available_actions)
+                    q[s][a] = 0.0
+                    returns[s][a] = 0
 
+            chosen_action = np.random.choice(
+                list(pi[s].keys()),
+                1,
+                False,
+                p=list(pi[s].values())
+            )[0]
+
+            A.append(chosen_action)
+            old_score = self.score()
+            self.act_with_action_id(chosen_action)
+            r = self.score() - old_score
+            R.append(r)
+        return S, A, R
+
+
+if __name__ == "__main__":
+    env = EnvTicTacToeSingleAgent()
+    env.reset_random()
+    env.view()

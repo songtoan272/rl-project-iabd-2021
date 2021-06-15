@@ -1,8 +1,7 @@
-from do_not_touch.SingleAgentEnvStateData import *
-
-from do_not_touch.bytes_wrapper import *
-from do_not_touch import get_dll
-from do_not_touch.contracts import SingleAgentEnv
+from drl_sample_project_python.do_not_touch.SingleAgentEnvStateData import *
+from drl_sample_project_python.do_not_touch.bytes_wrapper import *
+from drl_sample_project_python.do_not_touch import get_dll
+from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
 
 
 class SecretSingleAgentEnv(SingleAgentEnv):
