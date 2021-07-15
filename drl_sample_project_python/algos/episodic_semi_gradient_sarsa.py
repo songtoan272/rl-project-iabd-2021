@@ -36,10 +36,10 @@ def get_episodic_semi_gradient_sarsa(env: DeepSingleAgentEnv, pre_warm: int, eps
                 #     chosen_action = a
                 #     chosen_action_q_value = q_value
 
-            if episode_id % print_every_n_episodes == 0:
-                print(f'State Description : {s}')
-                print(f'Chosen action : {chosen_action}')
-                print(f'Chosen action value : {chosen_action_q_value}')
+            # if episode_id % print_every_n_episodes == 0:
+            #     print(f'State Description : {s}')
+            #     print(f'Chosen action : {chosen_action}')
+            #     print(f'Chosen action value : {chosen_action_q_value}')
 
             previous_score = env.score()
             env.act_with_action_id(chosen_action)

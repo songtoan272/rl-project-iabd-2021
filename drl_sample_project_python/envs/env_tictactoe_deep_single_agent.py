@@ -1,10 +1,10 @@
 import operator
 import random
 import numpy as np
-from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
+from drl_sample_project_python.do_not_touch.contracts import DeepSingleAgentEnv
 
 
-class EnvTicTacToeSingleAgent(SingleAgentEnv):
+class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
     def __init__(self, max_steps: int, first_player: int = 0, second_pi=None):
         assert(max_steps > 0)
         self.max_steps = max_steps
@@ -12,17 +12,14 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
         self.second_pi = second_pi
         self.reset()
 
-    def state_id(self) -> int:
-        num = ''
-        for b in self.board:
-            if b == 0:
-                num += '1'
-            elif b == 1:
-                num += '2'
-            else:
-                num += '3'
+    def state_description(self) -> np.ndarray:
+        return np.array(self.board)
 
-        return int(num)
+    def state_description_length(self) -> int:
+        return len(self.board)
+
+    def max_actions_count(self) -> int:
+        return 9
 
     def is_game_over(self) -> bool:
         return self.game_over
@@ -192,3 +189,5 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
                 self.board[i] = c
         self.always_random = False
 
+    def set_state(self, state):
+        self.board = state

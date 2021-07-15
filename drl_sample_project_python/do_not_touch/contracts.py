@@ -74,3 +74,6 @@ class DeepSingleAgentEnv:
 
     def reset_random(self):
         pass
+
+    def set_state(self, state):
+        pass

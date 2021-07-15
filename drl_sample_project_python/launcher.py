@@ -6,12 +6,20 @@ import numpy as np
 from PIL import Image, ImageTk
 import tensorflow as tf
 
+import drl_sample_project_python.envs.env_line_world_deep_single_agent as lw_deep
+import drl_sample_project_python.envs.env_grid_world_deep_single_agent as gw_deep
+import drl_sample_project_python.envs.env_tictactoe_deep_single_agent as ttt_deep
+
 FONT = 'Comic Sans MS'
 
 GAMES = [('Line World', 1), ('Grid World', 2), ('Tic Tac Toe', 3), ('Pac-Man', 4)]
 ALGOS = [('Policy iteration', 1), ('Value iteration', 2), ('Monte Carlo ES', 3),
          ('On policy first visit Monte Carlo', 4), ('Off policy Monte Carlo Control', 5), ('Sarsa', 6),
          ('Q-learning', 7), ('Expected Sarsa', 8), ('Periodic semi-gradient sarsa', 9)]
+
+env_line_world = lw_deep.EnvLineWorldDeepSingleAgent(7, 100)
+env_grid_world = gw_deep.EnvGridWorldDeepSingleAgent(5, 5, 100, (4, 4), (0, 0))
+env_tic_tact_toe = ttt_deep.EnvTicTacToeDeepSingleAgent(100)
 
 
 def load_neuralnet(game: int, algo: int):
@@ -20,33 +28,67 @@ def load_neuralnet(game: int, algo: int):
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_line_world'
         elif algo == 10:
-            file_name = 'value_iteration_line_world'
+            file_name = ''
         elif algo == 11:
-            file_name = 'monte_carlo_es_line_world'
+            file_name = ''
         elif algo == 12:
-            file_name = 'on_policy_monte_carlo_line_world'
+            file_name = ''
     elif game == 2:
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_grid_world'
         elif algo == 10:
-            file_name = 'value_iteration_line_world'
+            file_name = ''
         elif algo == 11:
-            file_name = 'monte_carlo_es_line_world'
+            file_name = ''
         elif algo == 12:
-            file_name = 'on_policy_monte_carlo_line_world'
+            file_name = ''
     elif game == 3:
         if algo == 9:
-            file_name = 'policy_iteration_line_world'
+            file_name = 'episodic_semi_gradient_sarsa_tic_tac_toe'
         elif algo == 10:
-            file_name = 'value_iteration_line_world'
+            file_name = ''
         elif algo == 11:
-            file_name = 'monte_carlo_es_line_world'
+            file_name = ''
         elif algo == 12:
-            file_name = 'on_policy_monte_carlo_line_world'
+            file_name = ''
 
     path = './models/' + file_name + '.h5'
     nerual_net = tf.keras.models.load_model(path)
     return nerual_net
+
+
+def predict_line_world(neural_net) -> int:
+    all_q_inputs = np.zeros((len(env_grid_world.available_actions_ids()),
+                             env_grid_world.state_description_length() + env_grid_world.max_actions_count()))
+    for i, a in enumerate(env_grid_world.available_actions_ids()):
+        all_q_inputs[i] = np.hstack(
+            [env_grid_world.state_description(), tf.keras.utils.to_categorical(a, env_grid_world.max_actions_count())])
+    all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
+    print(all_q_value)
+    return env_grid_world.available_actions_ids()[np.argmax(all_q_value)]
+
+
+def predict_grid_world(neural_net) -> int:
+    all_q_inputs = np.zeros((len(env_line_world.available_actions_ids()),
+                             env_line_world.state_description_length() + env_line_world.max_actions_count()))
+    for i, a in enumerate(env_line_world.available_actions_ids()):
+        all_q_inputs[i] = np.hstack(
+            [env_line_world.state_description(), tf.keras.utils.to_categorical(a, env_line_world.max_actions_count())])
+    all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
+    print(all_q_value)
+    return env_line_world.available_actions_ids()[np.argmax(all_q_value)]
+
+
+def predict_tic_tac_toe(neural_net) -> int:
+    all_q_inputs = np.zeros((len(env_tic_tact_toe.available_actions_ids()),
+                             env_tic_tact_toe.state_description_length() + env_tic_tact_toe.max_actions_count()))
+    for i, a in enumerate(env_tic_tact_toe.available_actions_ids()):
+        all_q_inputs[i] = np.hstack(
+            [env_tic_tact_toe.state_description(), tf.keras.utils.to_categorical(a, env_tic_tact_toe.max_actions_count())])
+    all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
+    print(all_q_value)
+    return env_tic_tact_toe.available_actions_ids()[np.argmax(all_q_value)]
+
 
 
 def import_json(game: int, algo: int):
@@ -184,20 +226,29 @@ def tic_tac_toe(algo: int, canvas):
             create_line()
 
     def simulate():
-        if algo > 8:
-            load_neuralnet(3, algo)
-            return
-        json_data = import_json(3, algo)
         n = ''
+        board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
         for i in range(len(grid)):
             for j in range(len(grid[i])):
                 if grid[j][i] == 5:
                     grid[j][i] = 2
+
+                if grid[j][i] == 2 or grid[j][i] == 5:
+                    board[i][j] = 1
+                elif grid[j][i] == 3:
+                    board[i][j] = 10
                 n += str(grid[j][i])
-        print(n)
 
         if not is_terminated():
-            action = json_data[n]
+            if algo > 8:
+                neural_net = load_neuralnet(3, algo)
+                print(board)
+                print(np.array(board).flatten())
+                env_tic_tact_toe.set_state(np.array(board).flatten())
+                action = predict_tic_tac_toe(neural_net)
+            else:
+                json_data = import_json(3, algo)
+                action = json_data[n]
 
             x = action % 3
             y = action // 3
@@ -264,10 +315,6 @@ def grid_world(algo: int, canvas):
             create_line()
 
     def simulate():
-        if algo > 8:
-            load_neuralnet(2, algo)
-            return
-        json_data = import_json(2, algo)
         x = None
         y = None
         n = None
@@ -275,11 +322,15 @@ def grid_world(algo: int, canvas):
             for j in range(len(grid[i])):
                 if grid[i][j] == 1:
                     n = j * 5 + i
-                    print(i, ' ', j)
                     x = i
                     y = j
-        action = json_data[str(n)]
-        print(n, ' -> ', action)
+        if algo > 8:
+            neural_net = load_neuralnet(2, algo)
+            env_grid_world.set_state(n)
+            action = predict_line_world(neural_net)
+        else:
+            json_data = import_json(2, algo)
+            action = json_data[str(n)]
 
         grid[x][y] = 2
         if action == 0:
@@ -344,31 +395,19 @@ def line_world(algo: int, canvas):
                 create_line()
 
     def simulate():
+        n = None
+        for i, (x, state) in enumerate(grid):
+            if state == 1:
+                n = i
+        if n is None:
+            return
+
         if algo > 8:
             neural_net = load_neuralnet(1, algo)
-            board = np.zeros(len(grid) + 2)
-            for x, i in enumerate(grid):
-                if i[1] == 100:
-                    board[x] = 10
-                elif i[1] == 1:
-                    board[x] = 1
-                    n = x
-                elif i[1] == 2:
-                    board[x] = 0
-                elif i[1] == -1:
-                    board[x] = -1
-            board[8] = 1
-            prediction = neural_net.predict(board.reshape(-1, len(board)))
-            print(np.argmax(np.squeeze(prediction)))
-            action = 0
+            env_line_world.set_state(n)
+            action = predict_line_world(neural_net)
         else:
             json_data = import_json(1, algo)
-            n = None
-            for i, (x, state) in enumerate(grid):
-                if state == 1:
-                    n = i
-            if n is None:
-                return
             action = json_data[str(n)]
 
         n_s = 0

@@ -68,3 +68,6 @@ class EnvLineWorldDeepSingleAgent(DeepSingleAgentEnv):
         self.current_step = 0
         self.current_score = 0.0
 
+    def set_state(self, state):
+        self.agent_pos = state
+
