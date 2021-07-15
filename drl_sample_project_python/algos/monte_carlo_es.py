@@ -24,14 +24,15 @@ def monte_carlo_es(env: SingleAgentEnv,
             S.append(s)
             available_actions = env.available_actions_ids()
             if s not in pi:
-                pi[s] = np.random.choice(available_actions, 1, False)[0]
+                pi[s] = {}
                 q[s] = {}
                 returns[s] = {}
                 for a in available_actions:
+                    pi[s][a] = 1.0 / len(available_actions)
                     q[s][a] = 0.0
                     returns[s][a] = 0
 
-            chosen_action = pi[s]
+            chosen_action = np.random.choice(available_actions, 1, False)[0]
 
             A.append(chosen_action)
             old_score = env.score()

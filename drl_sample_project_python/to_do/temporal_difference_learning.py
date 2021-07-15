@@ -9,8 +9,8 @@ from drl_sample_project_python.algos.sarsa import get_sarsa
 from drl_sample_project_python.algos.expected_sarsa import get_expected_sarsa
 
 
-max_iter = 100000
-nb_generation = 0
+max_iter = 300000
+nb_generation = 5
 tic_tac_toe = EnvTicTacToeSingleAgent(100)
 secret_env = Env3()
 
@@ -132,15 +132,15 @@ def demo():
     print(expected_sarsa_on_tic_tac_toe_solo())
 
     print('\n\nSarsa : Secret Env 3\n')
-    #print(sarsa_on_secret_env3())
+    print(sarsa_on_secret_env3())
     print('\n\nQ learning : Secret Env 3\n')
-    #print(q_learning_on_secret_env3())
+    print(q_learning_on_secret_env3())
     print('\n\nExpected sarsa : Secret Env 3\n')
-    #print(expected_sarsa_on_secret_env3())
+    print(expected_sarsa_on_secret_env3())
 
-    #sarsa_on_line_world()
-    #q_learning_on_line_world()
-    #expected_sarsa_on_line_world()
-    #sarsa_on_grid_world()
-    #q_learning_on_grid_world()
-    #expected_sarsa_on_grid_world()
+    sarsa_on_line_world()
+    q_learning_on_line_world()
+    expected_sarsa_on_line_world()
+    sarsa_on_grid_world()
+    q_learning_on_grid_world()
+    expected_sarsa_on_grid_world()

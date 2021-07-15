@@ -1,14 +1,52 @@
 import tkinter as tk
 import json
 from tkinter import messagebox
+
+import numpy as np
 from PIL import Image, ImageTk
+import tensorflow as tf
 
 FONT = 'Comic Sans MS'
 
 GAMES = [('Line World', 1), ('Grid World', 2), ('Tic Tac Toe', 3), ('Pac-Man', 4)]
 ALGOS = [('Policy iteration', 1), ('Value iteration', 2), ('Monte Carlo ES', 3),
          ('On policy first visit Monte Carlo', 4), ('Off policy Monte Carlo Control', 5), ('Sarsa', 6),
-         ('Q-learning', 7), ('Expected Sarsa', 8)]
+         ('Q-learning', 7), ('Expected Sarsa', 8), ('Periodic semi-gradient sarsa', 9)]
+
+
+def load_neuralnet(game: int, algo: int):
+    file_name = ''
+    if game == 1:
+        if algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_line_world'
+        elif algo == 10:
+            file_name = 'value_iteration_line_world'
+        elif algo == 11:
+            file_name = 'monte_carlo_es_line_world'
+        elif algo == 12:
+            file_name = 'on_policy_monte_carlo_line_world'
+    elif game == 2:
+        if algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_grid_world'
+        elif algo == 10:
+            file_name = 'value_iteration_line_world'
+        elif algo == 11:
+            file_name = 'monte_carlo_es_line_world'
+        elif algo == 12:
+            file_name = 'on_policy_monte_carlo_line_world'
+    elif game == 3:
+        if algo == 9:
+            file_name = 'policy_iteration_line_world'
+        elif algo == 10:
+            file_name = 'value_iteration_line_world'
+        elif algo == 11:
+            file_name = 'monte_carlo_es_line_world'
+        elif algo == 12:
+            file_name = 'on_policy_monte_carlo_line_world'
+
+    path = './models/' + file_name + '.h5'
+    nerual_net = tf.keras.models.load_model(path)
+    return nerual_net
 
 
 def import_json(game: int, algo: int):
@@ -125,7 +163,8 @@ def tic_tac_toe(algo: int, canvas):
                     canvas.create_line(10 + i * 100, 10 + j * 100, 100 + i * 100, 100 + j * 100, width=3)
                     canvas.create_line(100 + i * 100, 10 + j * 100, 10 + i * 100, 100 + j * 100, width=3)
                 elif grid[i][j] == 3:
-                    canvas.create_oval(10 + i * 100, 10 + j * 100, 100 + i * 100, 100 + j * 100, outline="black", width=3)
+                    canvas.create_oval(10 + i * 100, 10 + j * 100, 100 + i * 100, 100 + j * 100, outline="black",
+                                       width=3)
         canvas.place(x=canvas_places[0], y=canvas_places[1])
 
     def click_square(event=None):
@@ -145,7 +184,9 @@ def tic_tac_toe(algo: int, canvas):
             create_line()
 
     def simulate():
-
+        if algo > 8:
+            load_neuralnet(3, algo)
+            return
         json_data = import_json(3, algo)
         n = ''
         for i in range(len(grid)):
@@ -163,7 +204,6 @@ def tic_tac_toe(algo: int, canvas):
             grid[x][y] = 3
 
             create_line()
-    
 
     simulate()
     canvas.bind('<Button-1>', click_square)
@@ -201,7 +241,8 @@ def grid_world(algo: int, canvas):
                     fill = '#47d147'
                 elif grid[i][j] == 2:
                     fill = '#70db70'
-                canvas.create_rectangle(5 + i * 100, 5 + j * 100, 105 + i * 100, 105 + j * 100, outline='black', fill=fill)
+                canvas.create_rectangle(5 + i * 100, 5 + j * 100, 105 + i * 100, 105 + j * 100, outline='black',
+                                        fill=fill)
         canvas.place(x=450, y=100)
 
     def click_square(event=None):
@@ -223,6 +264,9 @@ def grid_world(algo: int, canvas):
             create_line()
 
     def simulate():
+        if algo > 8:
+            load_neuralnet(2, algo)
+            return
         json_data = import_json(2, algo)
         x = None
         y = None
@@ -240,7 +284,7 @@ def grid_world(algo: int, canvas):
         grid[x][y] = 2
         if action == 0:
             if x > 0:
-                grid[x-1][y] = 1
+                grid[x - 1][y] = 1
         elif action == 1:
             if x < 4:
                 grid[x + 1][y] = 1
@@ -300,15 +344,33 @@ def line_world(algo: int, canvas):
                 create_line()
 
     def simulate():
-        json_data = import_json(1, algo)
-        n = None
-        for i, (x, state) in enumerate(grid):
-            if state == 1:
-                n = i
-        if n is None:
-            return
+        if algo > 8:
+            neural_net = load_neuralnet(1, algo)
+            board = np.zeros(len(grid) + 2)
+            for x, i in enumerate(grid):
+                if i[1] == 100:
+                    board[x] = 10
+                elif i[1] == 1:
+                    board[x] = 1
+                    n = x
+                elif i[1] == 2:
+                    board[x] = 0
+                elif i[1] == -1:
+                    board[x] = -1
+            board[8] = 1
+            prediction = neural_net.predict(board.reshape(-1, len(board)))
+            print(np.argmax(np.squeeze(prediction)))
+            action = 0
+        else:
+            json_data = import_json(1, algo)
+            n = None
+            for i, (x, state) in enumerate(grid):
+                if state == 1:
+                    n = i
+            if n is None:
+                return
+            action = json_data[str(n)]
 
-        action = json_data[str(n)]
         n_s = 0
         if action == 0:
             n_s = n - 1 if n > 0 else n
@@ -327,10 +389,12 @@ def line_world(algo: int, canvas):
 
 
 def validate(game: int, algo: int, canvas):
+    global nerual_net
+    nerual_net = None
     if game == 0 or algo == 0:
         messagebox.showinfo('Erreur', 'Veuillez choisir un jeu et un algorithme')
 
-    if (game == 3 and algo in(1, 2)) or (game == 4 and algo not in(9, 10, 11)):
+    if (game == 3 and algo in (1, 2)) or (game == 4 and algo not in (9, 10, 11)):
         messagebox.showinfo("Erreur", "Ce couple jeu/algorithme n'est pas disponible")
         return
 
@@ -345,7 +409,7 @@ def validate(game: int, algo: int, canvas):
 if __name__ == "__main__":
     window = tk.Tk()
     window.title('Best projet <3')
-    window.geometry('1280x720')
+    window.geometry('1280x900')
 
     main_label = tk.Label(text='Bienvenu sur le meilleur Projet DRL !')
     main_label.config(font=(FONT, '26'))
@@ -376,6 +440,6 @@ if __name__ == "__main__":
     canvas = tk.Canvas(width=1000, height=1000)
     vld_btn = tk.Button(text='Valider', command=lambda: validate(game.get(), algo.get(), canvas))
     vld_btn.config(font=(FONT, '18'), width=13)
-    vld_btn.place(x=10, y=640)
+    vld_btn.place(x=10, y=800)
 
     window.mainloop()

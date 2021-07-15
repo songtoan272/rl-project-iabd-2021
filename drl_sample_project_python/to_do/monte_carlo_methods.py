@@ -9,8 +9,8 @@ from drl_sample_project_python.algos.off_policy_monte_carlo_control import off_p
 from drl_sample_project_python.algos.on_policy_first_visit_monte_carlo_control import on_policy_first_visit_monte_carlo_control
 
 
-max_iter = 20000
-nb_generation = 1
+max_iter = 300000
+nb_generation = 5
 tic_tac_toe = EnvTicTacToeSingleAgent(200)
 secret_env = Env2()
 
@@ -130,15 +130,15 @@ def demo():
     print(off_policy_monte_carlo_control_on_tic_tac_toe_solo())
 
     print('\n\nMonte Carlo ES : Secret Env 2\n')
-    #print(monte_carlo_es_on_secret_env2())
+    print(monte_carlo_es_on_secret_env2())
     print('\n\nOn policy Monte Carlo : Secret Env 2\n')
-    #print(on_policy_first_visit_monte_carlo_control_on_secret_env2())
+    print(on_policy_first_visit_monte_carlo_control_on_secret_env2())
     print('\n\nOff policy Monte Carlo: Secret Env 2\n')
-    #print(off_policy_monte_carlo_control_on_secret_env2())
+    print(off_policy_monte_carlo_control_on_secret_env2())
 
-    #monte_carlo_es_line_world()
-    #on_policy_first_visit_monte_carlo_control_on_line_world()
-    #off_policy_monte_carlo_control_on_line_world()
-    #monte_carlo_es_grid_world()
-    #on_policy_first_visit_monte_carlo_control_on_grid_world()
-    #off_policy_monte_carlo_control_on_grid_world()
+    monte_carlo_es_line_world()
+    on_policy_first_visit_monte_carlo_control_on_line_world()
+    off_policy_monte_carlo_control_on_line_world()
+    monte_carlo_es_grid_world()
+    on_policy_first_visit_monte_carlo_control_on_grid_world()
+    off_policy_monte_carlo_control_on_grid_world()
