@@ -9,7 +9,7 @@ from drl_sample_project_python.algos.sarsa import get_sarsa
 from drl_sample_project_python.algos.expected_sarsa import get_expected_sarsa
 
 
-max_iter = 300000
+max_iter = 50000
 nb_generation = 5
 tic_tac_toe = EnvTicTacToeSingleAgent(100)
 secret_env = Env3()
@@ -104,7 +104,7 @@ def q_learning_on_line_world():
 
 
 def expected_sarsa_on_line_world():
-    result = get_expected_sarsa(EnvLineWorldSingleAgent(7, 1000), 0.1, 1.0, 0.9, max_iter)
+    result = get_expected_sarsa(EnvLineWorldSingleAgent(7, 1000), 0.1, 1.0, 0.9, max_iter, "expected_sarsa_line_world")
     drl_sample_project_python.main.export_to_json(result.pi, 'expected_sarsa_line_world')
 
 
@@ -119,7 +119,7 @@ def q_learning_on_grid_world():
 
 
 def expected_sarsa_on_grid_world():
-    result = get_expected_sarsa(EnvGridWorldSingleAgent(5, 5, 1000, (4, 4), (0, 0)), 0.1, 1.0, 0.9, max_iter)
+    result = get_expected_sarsa(EnvGridWorldSingleAgent(5, 5, 1000, (4, 4), (0, 0)), 0.1, 1.0, 0.9, max_iter, "expected_sarsa_grid_world")
     drl_sample_project_python.main.export_to_json(result.pi, 'expected_sarsa_grid_world')
 
 

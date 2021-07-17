@@ -5,17 +5,18 @@ from drl_sample_project_python.envs.env_grid_world_deep_single_agent import EnvG
 from drl_sample_project_python.envs.env_tictactoe_deep_single_agent import EnvTicTacToeDeepSingleAgent
 from drl_sample_project_python.envs.env_pac_man_deep_single_agent import EnvPacManDeepSingleAgent
 from drl_sample_project_python.algos.episodic_semi_gradient_sarsa import get_episodic_semi_gradient_sarsa
+from drl_sample_project_python.algos.deep_q_learning import get_deep_q_learning
 
 import tensorflow as tf
 import numpy as np
 
 
 max_iter = 100
-max_steps = 1000
+max_steps = 25
 line_world = EnvLineWorldDeepSingleAgent(7, max_steps)
 grid_world = EnvGridWorldDeepSingleAgent(5, 5, max_steps, (4, 4), (0, 0))
 tic_tac_toe = EnvTicTacToeDeepSingleAgent(max_steps)
-pac_man = EnvPacManDeepSingleAgent(max_steps, '././models/pac_man_level_1.txt')
+pac_man = EnvPacManDeepSingleAgent(max_steps, '././models/pac_man_level_custom_2.txt')
 
 
 def episodic_semi_gradient_sarsa_on_line_world():
@@ -26,12 +27,11 @@ def episodic_semi_gradient_sarsa_on_line_world():
     ])
     q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
 
-    pre_warm = 10
-    epsilon = 0.1
     gamma = 0.9
-    nn = get_episodic_semi_gradient_sarsa(line_world, pre_warm, epsilon, gamma, max_iter, q)
-    drl_sample_project_python.main.save_neural_net(nn, 'episodic_semi_gradient_sarsa_line_world')
-    return nn
+    epsilon = 0.2
+    model_name = 'episodic_semi_gradient_sarsa_line_world'
+    nn = get_episodic_semi_gradient_sarsa(line_world, gamma, epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
 
 
 def episodic_semi_gradient_sarsa_on_grid_world():
@@ -42,48 +42,88 @@ def episodic_semi_gradient_sarsa_on_grid_world():
     ])
     q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
 
-    pre_warm = 10
-    epsilon = 0.1
     gamma = 0.9
-    nn = get_episodic_semi_gradient_sarsa(grid_world, pre_warm, epsilon, gamma, max_iter, q)
-    drl_sample_project_python.main.save_neural_net(nn, 'episodic_semi_gradient_sarsa_grid_world')
-    return nn
+    epsilon = 0.2
+    model_name = 'episodic_semi_gradient_sarsa_grid_world'
+    nn = get_episodic_semi_gradient_sarsa(grid_world, gamma, epislon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
 
 
 def episodic_semi_gradient_sarsa_on_tic_tac_toe():
     q = tf.keras.Sequential([
-        tf.keras.layers.Dense(16, activation=tf.keras.activations.tanh,
+        tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh,
                               input_dim=(tic_tac_toe.state_description_length() + tic_tac_toe.max_actions_count())),
+        tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh),
         tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
     ])
     q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
 
-    pre_warm = 10
-    epsilon = 0.1
     gamma = 0.9
-    nn = get_episodic_semi_gradient_sarsa(tic_tac_toe, pre_warm, epsilon, gamma, max_iter, q)
-    drl_sample_project_python.main.save_neural_net(nn, 'episodic_semi_gradient_sarsa_tic_tac_toe')
-    return nn
+    epsilon = 0.6
+    model_name = 'episodic_semi_gradient_sarsa_tic_tac_toe'
+    nn = get_episodic_semi_gradient_sarsa(tic_tac_toe, gamma, epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
 
 
 def episodic_semi_gradient_sarsa_on_pac_man():
     q = tf.keras.Sequential([
-        tf.keras.layers.Dense(1, activation=tf.keras.activations.tanh,
+        tf.keras.layers.Dense(16, activation=tf.keras.activations.tanh,
                               input_dim=(pac_man.state_description_length() + pac_man.max_actions_count())),
-        tf.keras.layers.Dense(2, input_dim=256, activation=tf.keras.activations.linear),
-        tf.keras.layers.Dense(8, input_dim=128, activation=tf.keras.activations.linear),
-        tf.keras.layers.Dense(16, input_dim=64, activation=tf.keras.activations.linear),
-        tf.keras.layers.Dense(8, input_dim=128, activation=tf.keras.activations.linear),
         tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
     ])
     q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
 
-    pre_warm = 10
-    epsilon = 0.1
     gamma = 0.9
-    nn = get_episodic_semi_gradient_sarsa(pac_man, pre_warm, epsilon, gamma, max_iter, q)
-    drl_sample_project_python.main.save_neural_net(nn, 'episodic_semi_gradient_sarsa_pac_man')
-    return nn
+    epsilon = 0.8
+    model_name = 'episodic_semi_gradient_sarsa_pac_man'
+    nn = get_episodic_semi_gradient_sarsa(pac_man, gamma,epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
+
+
+def deep_q_learning_line_world():
+    q = tf.keras.Sequential([
+        tf.keras.layers.Dense(16, activation=tf.keras.activations.tanh,
+                              input_dim=(line_world.state_description_length() + line_world.max_actions_count())),
+        tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
+    ])
+    q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
+
+    gamma = 0.9
+    epsilon = 0.2
+    model_name = 'deep_q_learning_line_world'
+    nn = get_deep_q_learning(line_world, gamma, epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
+
+
+def deep_q_learning_grid_world():
+    q = tf.keras.Sequential([
+        tf.keras.layers.Dense(16, activation=tf.keras.activations.tanh,
+                              input_dim=(grid_world.state_description_length() + grid_world.max_actions_count())),
+        tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
+    ])
+    q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
+
+    gamma = 0.9
+    epsilon = 0.3
+    model_name = 'deep_q_learning_grid_world'
+    nn = get_deep_q_learning(grid_world, gamma, epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
+
+
+def deep_q_learning_tic_tact_toe():
+    q = tf.keras.Sequential([
+        tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh,
+                              input_dim=(tic_tac_toe.state_description_length() + tic_tac_toe.max_actions_count())),
+        tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh),
+        tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
+    ])
+    q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
+
+    gamma = 0.9
+    epsilon = 0.1
+    model_name = 'deep_q_learning_tic_tac_toe'
+    nn = get_deep_q_learning(tic_tac_toe, gamma, epsilon, max_iter, q, model_name)
+    drl_sample_project_python.main.save_neural_net(nn, model_name)
 
 
 def demo():
@@ -93,6 +133,12 @@ def demo():
     #episodic_semi_gradient_sarsa_on_grid_world()
     #print('\n\nEpisodic semi gradient sarsa : Tic Tac Toe\n')
     #episodic_semi_gradient_sarsa_on_tic_tac_toe()
-    print('\n\nEpisodic semi gradient sarsa : Pac Man\n')
-    episodic_semi_gradient_sarsa_on_pac_man()
+    #print('\n\nEpisodic semi gradient sarsa : Pac Man\n')
+    #episodic_semi_gradient_sarsa_on_pac_man()
 
+    #print('\n\nDeep Q-Learning : Line World\n')
+    #deep_q_learning_line_world()
+    #print('\n\nDeep Q-Learning : Grid World\n')
+    #deep_q_learning_grid_world()
+    print('\n\nDeep Q-Learning : Tic Tac Toe\n')
+    deep_q_learning_tic_tact_toe()

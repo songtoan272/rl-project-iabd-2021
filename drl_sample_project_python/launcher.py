@@ -1,5 +1,8 @@
+import copy
+import time
 import tkinter as tk
 import json
+import random
 from tkinter import messagebox
 
 import numpy as np
@@ -9,18 +12,26 @@ import tensorflow as tf
 import drl_sample_project_python.envs.env_line_world_deep_single_agent as lw_deep
 import drl_sample_project_python.envs.env_grid_world_deep_single_agent as gw_deep
 import drl_sample_project_python.envs.env_tictactoe_deep_single_agent as ttt_deep
+import drl_sample_project_python.envs.env_pac_man_deep_single_agent as pm_deep
 
 FONT = 'Comic Sans MS'
 
 GAMES = [('Line World', 1), ('Grid World', 2), ('Tic Tac Toe', 3), ('Pac-Man', 4)]
 ALGOS = [('Policy iteration', 1), ('Value iteration', 2), ('Monte Carlo ES', 3),
          ('On policy first visit Monte Carlo', 4), ('Off policy Monte Carlo Control', 5), ('Sarsa', 6),
-         ('Q-learning', 7), ('Expected Sarsa', 8), ('Periodic semi-gradient sarsa', 9)]
+         ('Q-learning', 7), ('Expected Sarsa', 8), ('Periodic semi-gradient sarsa', 9), ('DQN', 10)]
 
 env_line_world = lw_deep.EnvLineWorldDeepSingleAgent(7, 100)
 env_grid_world = gw_deep.EnvGridWorldDeepSingleAgent(5, 5, 100, (4, 4), (0, 0))
 env_tic_tact_toe = ttt_deep.EnvTicTacToeDeepSingleAgent(100)
+env_pac_man = pm_deep.EnvPacManDeepSingleAgent(100, './models/pac_man_level_custom_2.txt')
 
+SIMULATE_BTN_POS = (650, 845)
+CANVAS = []
+
+
+def random_color():
+    return list(np.random.choice(range(256), size=3))
 
 def load_neuralnet(game: int, algo: int):
     file_name = ''
@@ -28,7 +39,7 @@ def load_neuralnet(game: int, algo: int):
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_line_world'
         elif algo == 10:
-            file_name = ''
+            file_name = 'deep_q_learning_line_world'
         elif algo == 11:
             file_name = ''
         elif algo == 12:
@@ -37,7 +48,7 @@ def load_neuralnet(game: int, algo: int):
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_grid_world'
         elif algo == 10:
-            file_name = ''
+            file_name = 'deep_q_learning_grid_world'
         elif algo == 11:
             file_name = ''
         elif algo == 12:
@@ -51,44 +62,30 @@ def load_neuralnet(game: int, algo: int):
             file_name = ''
         elif algo == 12:
             file_name = ''
+    elif game == 4:
+        if algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_pac_man'
+        elif algo == 10:
+            file_name = ''
+        elif algo == 11:
+            file_name = ''
+        elif algo == 12:
+            file_name = ''
 
     path = './models/' + file_name + '.h5'
-    nerual_net = tf.keras.models.load_model(path)
+    nerual_net = tf.keras.models.load_model(path, compile=False)
     return nerual_net
 
 
-def predict_line_world(neural_net) -> int:
-    all_q_inputs = np.zeros((len(env_grid_world.available_actions_ids()),
-                             env_grid_world.state_description_length() + env_grid_world.max_actions_count()))
-    for i, a in enumerate(env_grid_world.available_actions_ids()):
+def predict_model(neural_net, env) -> int:
+    all_q_inputs = np.zeros((len(env.available_actions_ids()),
+                             env.state_description_length() + env.max_actions_count()))
+    for i, a in enumerate(env.available_actions_ids()):
         all_q_inputs[i] = np.hstack(
-            [env_grid_world.state_description(), tf.keras.utils.to_categorical(a, env_grid_world.max_actions_count())])
+            [env.state_description(), tf.keras.utils.to_categorical(a, env.max_actions_count())])
     all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
     print(all_q_value)
-    return env_grid_world.available_actions_ids()[np.argmax(all_q_value)]
-
-
-def predict_grid_world(neural_net) -> int:
-    all_q_inputs = np.zeros((len(env_line_world.available_actions_ids()),
-                             env_line_world.state_description_length() + env_line_world.max_actions_count()))
-    for i, a in enumerate(env_line_world.available_actions_ids()):
-        all_q_inputs[i] = np.hstack(
-            [env_line_world.state_description(), tf.keras.utils.to_categorical(a, env_line_world.max_actions_count())])
-    all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
-    print(all_q_value)
-    return env_line_world.available_actions_ids()[np.argmax(all_q_value)]
-
-
-def predict_tic_tac_toe(neural_net) -> int:
-    all_q_inputs = np.zeros((len(env_tic_tact_toe.available_actions_ids()),
-                             env_tic_tact_toe.state_description_length() + env_tic_tact_toe.max_actions_count()))
-    for i, a in enumerate(env_tic_tact_toe.available_actions_ids()):
-        all_q_inputs[i] = np.hstack(
-            [env_tic_tact_toe.state_description(), tf.keras.utils.to_categorical(a, env_tic_tact_toe.max_actions_count())])
-    all_q_value = np.squeeze(neural_net.predict(all_q_inputs))
-    print(all_q_value)
-    return env_tic_tact_toe.available_actions_ids()[np.argmax(all_q_value)]
-
+    return env.available_actions_ids()[np.argmax(all_q_value)]
 
 
 def import_json(game: int, algo: int):
@@ -145,6 +142,173 @@ def import_json(game: int, algo: int):
     f.close()
 
     return data
+
+
+def pac_man(algo: int, canvas):
+    board = []
+    ghosts = []
+    env_pac_man.reset()
+    board, rows, cols, pacgum_count, ghosts = env_pac_man.init_board()
+    initial_board = copy.deepcopy(board)
+
+    wrapper = {}
+
+    square_size = round(min(750 / rows, 900 / cols), 0)
+
+    pac = Image.open('./models/pac_man.png')
+    pac.thumbnail((square_size - 4, square_size - 4), Image.ANTIALIAS)
+    tkinter_pac = ImageTk.PhotoImage(pac)
+    pac_canvas = tk.Canvas(width=square_size-2, height=square_size-2, bg='black', highlightthickness=0)
+    pac_canvas.pack()
+    pac_canvas.place(x=-100, y=-100)
+    pac_canvas.create_image(1, 1, image=tkinter_pac, anchor=tk.NW)
+
+    if ghosts[0] != -100:
+        red = Image.open('./models/red.png')
+        red.thumbnail((square_size - 4, square_size - 4), Image.ANTIALIAS)
+        tkinter_red = ImageTk.PhotoImage(red)
+        red_canvas = tk.Canvas(width=square_size - 2, height=square_size - 2, bg='black', highlightthickness=0)
+        red_canvas.pack()
+        red_canvas.place(x=-100, y=-100)
+        red_canvas.create_image(1, 1, image=tkinter_red, anchor=tk.NW)
+
+    if ghosts[1] != -100:
+        blue = Image.open('./models/blue.png')
+        blue.thumbnail((square_size - 4, square_size - 4), Image.ANTIALIAS)
+        tkinter_blue = ImageTk.PhotoImage(blue)
+        blue_canvas = tk.Canvas(width=square_size - 2, height=square_size - 2, bg='black', highlightthickness=0)
+        blue_canvas.pack()
+        blue_canvas.place(x=-100, y=-100)
+        blue_canvas.create_image(1, 1, image=tkinter_blue, anchor=tk.NW)
+
+    if ghosts[2] != -100:
+        pink = Image.open('./models/pink.png')
+        pink.thumbnail((square_size - 4, square_size - 4), Image.ANTIALIAS)
+        tkinter_pink = ImageTk.PhotoImage(pink)
+        pink_canvas = tk.Canvas(width=square_size - 2, height=square_size - 2, bg='black', highlightthickness=0)
+        pink_canvas.pack()
+        pink_canvas.place(x=-100, y=-100)
+        pink_canvas.create_image(1, 1, image=tkinter_pink, anchor=tk.NW)
+
+    if ghosts[3] != -100:
+        orange = Image.open('./models/orange.png')
+        orange.thumbnail((square_size - 4, square_size - 4), Image.ANTIALIAS)
+        tkinter_orange = ImageTk.PhotoImage(orange)
+        orange_canvas = tk.Canvas(width=square_size - 2, height=square_size - 2, bg='black', highlightthickness=0)
+        orange_canvas.pack()
+        orange_canvas.place(x=-100, y=-100)
+        orange_canvas.create_image(1, 1, image=tkinter_orange, anchor=tk.NW)
+
+    pac_label = tk.Label(width=square_size, height=square_size, image=tkinter_pac)
+    pac_label.image = tkinter_pac
+    red_label = tk.Label(width=square_size, height=square_size, image=tkinter_red)
+    red_label.image = tkinter_red
+    pink_label = tk.Label(width=square_size, height=square_size, image=tkinter_pink)
+    pink_label.image = tkinter_pink
+    orange_label = tk.Label(width=square_size, height=square_size, image=tkinter_orange)
+    orange_label.image = tkinter_orange
+    blue_label = tk.Label(width=square_size, height=square_size, image=tkinter_blue)
+    blue_label.image = tkinter_blue
+
+    CANVAS.append(pac_canvas)
+    CANVAS.append(red_canvas)
+    CANVAS.append(pink_canvas)
+    CANVAS.append(blue_canvas)
+    CANVAS.append(orange_canvas)
+
+    def create_line():
+        canvas.delete("all")
+        canvas.place(x=420, y=80)
+        for i in range(rows):
+            for j in range(cols):
+                fill = 'black'
+                outline = 'black'
+
+                if not board[i * cols + j].isnumeric():
+                    if board[i * cols + j] not in list(wrapper.keys()):
+                        wrapper[board[i * cols + j]] = random_color()
+                    fill = "#%02x%02x%02x" % (wrapper[board[i * cols + j]][0], wrapper[board[i * cols + j]][1], wrapper[board[i * cols + j]][2])
+                if board[i * cols + j] == '7':
+                    fill = "#%02x%02x%02x" % (25, 25, 166)
+                    outline = fill
+                canvas.create_rectangle(5 + j * square_size, 5 + i * square_size, 5 + square_size + j * square_size, 5 + square_size + i * square_size,
+                                        outline=outline, fill=fill)
+
+                if board[i * cols + j] == '1':
+                    canvas.create_oval(5 + square_size / 3 + j * square_size, 5 + square_size / 3 + i * square_size,
+                                       5 + square_size - square_size / 3 + j * square_size, 5 + square_size - square_size / 3 + i * square_size,
+                                       outline="white", fill='white')
+
+                if board[i * cols + j] == '2':
+                    pac_canvas.place(x=420 + 6 + j * square_size, y=80 + 6 + i * square_size)
+                if ghosts[0] == i * cols + j:
+                    red_canvas.place(x=420 + 6 + j * square_size, y=80 + 6 + i * square_size)
+                if ghosts[1] == i * cols + j:
+                    blue_canvas.place(x=420 + 6 + j * square_size, y=80 + 6 + i * square_size)
+                if ghosts[2] == i * cols + j:
+                    pink_canvas.place(x=420 + 6 + j * square_size, y=80 + 6 + i * square_size)
+                if ghosts[3] == i * cols + j:
+                    orange_canvas.place(x=420 + 6 + j * square_size, y=80 + 6 + i * square_size)
+
+    create_line()
+
+    def clear_pac():
+        for i in range(len(board)):
+            if board[i] == '2':
+                if initial_board[i] == '2':
+                    board[i] = '0'
+                else:
+                    board[i] = initial_board[i]
+
+    def click_square(event=None):
+        if 5 <= event.y <= rows * square_size and 5 <= event.x <= cols * square_size:
+            i = 0
+            j = 0
+            while event.x > 5 + square_size * i and i <= cols:
+                i += 1
+            i -= 1
+
+            while event.y > 5 + square_size * j and j <= rows:
+                j += 1
+            j -= 1
+
+            clear_pac()
+            if board[j * cols + i] in ('0', '1'):
+                board[j * cols + i] = '2'
+                env_pac_man.move_pac_man(j * cols + i)
+            create_line()
+
+    def simulate():
+        neural_net = load_neuralnet(4, algo)
+        env_pac_man.set_state(np.array(board).flatten())
+        action = predict_model(neural_net, env_pac_man)
+        env_pac_man.act_with_action_id(action)
+        b = env_pac_man.state_description()[:-8]
+        for n, s in enumerate(b):
+            board[n] = str(int(s))
+            if s > 10:
+                board[n] = chr(int(s))
+        for n, g in enumerate(env_pac_man.get_ghosts()):
+            ghosts[n] = g
+        create_line()
+
+    def loop_simulate(x):
+        simulate()
+        canvas.update()
+        canvas.update_idletasks()
+        if x > 0:
+            canvas.after(100, loop_simulate(x-1))
+
+    canvas.bind('<Button-1>', click_square)
+    create_line()
+
+    vld_btn = tk.Button(text='Simuler', command=lambda: simulate())
+    vld_btn.config(font=(FONT, '18'), width=13)
+    vld_btn.place(x=SIMULATE_BTN_POS[0], y=SIMULATE_BTN_POS[1])
+
+    vld_btn_loop = tk.Button(text='Simuler Loop', command=lambda: loop_simulate(500))
+    vld_btn_loop.config(font=(FONT, '18'), width=13)
+    vld_btn_loop.place(x=SIMULATE_BTN_POS[0] + 300, y=SIMULATE_BTN_POS[1])
 
 
 def tic_tac_toe(algo: int, canvas):
@@ -245,7 +409,7 @@ def tic_tac_toe(algo: int, canvas):
                 print(board)
                 print(np.array(board).flatten())
                 env_tic_tact_toe.set_state(np.array(board).flatten())
-                action = predict_tic_tac_toe(neural_net)
+                action = predict_model(neural_net, env_tic_tact_toe)
             else:
                 json_data = import_json(3, algo)
                 action = json_data[n]
@@ -262,7 +426,7 @@ def tic_tac_toe(algo: int, canvas):
 
     vld_btn = tk.Button(text='Simuler', command=lambda: simulate())
     vld_btn.config(font=(FONT, '18'), width=13)
-    vld_btn.place(x=625, y=640)
+    vld_btn.place(x=SIMULATE_BTN_POS[0], y=SIMULATE_BTN_POS[1])
 
 
 def grid_world(algo: int, canvas):
@@ -327,7 +491,7 @@ def grid_world(algo: int, canvas):
         if algo > 8:
             neural_net = load_neuralnet(2, algo)
             env_grid_world.set_state(n)
-            action = predict_line_world(neural_net)
+            action = predict_model(neural_net, env_grid_world)
         else:
             json_data = import_json(2, algo)
             action = json_data[str(n)]
@@ -353,7 +517,7 @@ def grid_world(algo: int, canvas):
 
     vld_btn = tk.Button(text='Simuler', command=lambda: simulate())
     vld_btn.config(font=(FONT, '18'), width=13)
-    vld_btn.place(x=625, y=640)
+    vld_btn.place(x=SIMULATE_BTN_POS[0], y=SIMULATE_BTN_POS[1])
 
 
 def line_world(algo: int, canvas):
@@ -405,7 +569,7 @@ def line_world(algo: int, canvas):
         if algo > 8:
             neural_net = load_neuralnet(1, algo)
             env_line_world.set_state(n)
-            action = predict_line_world(neural_net)
+            action = predict_model(neural_net, env_line_world)
         else:
             json_data = import_json(1, algo)
             action = json_data[str(n)]
@@ -424,10 +588,12 @@ def line_world(algo: int, canvas):
 
     vld_btn = tk.Button(text='Simuler', command=lambda: simulate())
     vld_btn.config(font=(FONT, '18'), width=13)
-    vld_btn.place(x=625, y=640)
+    vld_btn.place(x=SIMULATE_BTN_POS[0], y=SIMULATE_BTN_POS[1])
 
 
 def validate(game: int, algo: int, canvas):
+    for c in CANVAS:
+        c.delete('all')
     global nerual_net
     nerual_net = None
     if game == 0 or algo == 0:
@@ -443,12 +609,14 @@ def validate(game: int, algo: int, canvas):
         grid_world(algo, canvas)
     elif game == 3:
         tic_tac_toe(algo, canvas)
+    elif game == 4:
+        pac_man(algo, canvas)
 
 
 if __name__ == "__main__":
     window = tk.Tk()
     window.title('Best projet <3')
-    window.geometry('1280x900')
+    window.geometry('1280x920')
 
     main_label = tk.Label(text='Bienvenu sur le meilleur Projet DRL !')
     main_label.config(font=(FONT, '26'))

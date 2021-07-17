@@ -1,6 +1,7 @@
 import random
 import json
 import operator
+import matplotlib.pyplot as plt
 
 import numpy as np
 import tensorflow as tf
@@ -24,6 +25,14 @@ def export_to_json(pi, file_name: str):
 
 def save_neural_net(neural_net, name: str):
     neural_net.save('./models/' + name + '.h5')
+
+
+def plot_scores(name: str, scores, scale):
+    plt.title(name)
+    plt.xlabel("Iterations")
+    plt.ylabel("Score moyen pour " + str(scale) + " parties")
+    plt.plot(np.arange(1, len(scores) + 1), scores)
+    plt.show()
 
 
 if __name__ == "__main__":

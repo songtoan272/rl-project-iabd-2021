@@ -1,11 +1,12 @@
 import numpy as np
 from tqdm import *
 
+import drl_sample_project_python.main
 from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
 from drl_sample_project_python.do_not_touch.result_structures import PolicyAndActionValueFunction
 
 
-def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma: float, max_iter: int) -> PolicyAndActionValueFunction:
+def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma: float, max_iter: int, plot_name: str="") -> PolicyAndActionValueFunction:
     assert(epsilon > 0)
 
     pi = {}
@@ -59,12 +60,14 @@ def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma:
                     somme += pi[s_p][a] * q[s_p][a] - q[s][chosen_action]
                 q[s][chosen_action] += alpha * (r + gamma * somme)
 
-    for s in q.keys():
-        optimal_a_t = list(q[s].keys())[np.argmax(list(q[s].values()))]
-        for a_key, q_s_a in q[s].items():
-            if a_key == optimal_a_t:
-                pi[s][a_key] = 1.0
-            else:
-                pi[s][a_key] = 0.0
+        average = (average * n_iter + env.score()) / (n_iter + 1)
+        print(env.score())
+        n_iter += 1
 
+        if it % scale == 0:
+            scores.append(average)
+            average = 0.0
+            n_iter = 0
+
+    drl_sample_project_python.main.plot_scores(plot_name, scores, scale)
     return PolicyAndActionValueFunction(pi=pi, q=q)
