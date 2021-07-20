@@ -14,13 +14,20 @@ import to_do.chess as chess
 from drl_sample_project_python.envs.env_grid_world_deep_single_agent import EnvGridWorldDeepSingleAgent
 
 
-def export_to_json(pi, file_name: str):
+def export_to_json(pi, file_name: str, q=None):
     action_by_state = {int(str(k)): int(max(v.items(), key=operator.itemgetter(1))[0]) if type(v) is dict else int(str(v)) for k, v in pi.items()}
-
     pi_json = json.dumps(action_by_state)
     f = open('./models/' + file_name + '.json', 'w')
     f.write(pi_json)
     f.close()
+
+    print(q)
+    if q is not None:
+        decrypt_q = {int(str(k)): {int(str(k_p)): float(str(v_p)) for k_p, v_p in v.items()} for k, v in q.items()}
+        q_json = json.dumps(decrypt_q)
+        f = open('./models/' + file_name + '_q.json', 'w')
+        f.write(q_json)
+        f.close()
 
 
 def save_neural_net(neural_net, name: str):
@@ -38,9 +45,9 @@ def plot_scores(name: str, scores, scale):
 if __name__ == "__main__":
     #print('\n\n\nDynamic\n\n\n')
     #dynamic_programming.demo()
-    #print('\n\n\nmonte_carlo\n\n\n')
+    #print('\n\n\nMonte_carlo\n\n\n')
     #monte_carlo_methods.demo()
-    #print('\n\n\ntemporal\n\n\n')
-    #temporal_difference_learning.demo()
-    print('\n\n\nDeep RL\n\n\n')
-    deep_rl.demo()
+    print('\n\n\nTemporal\n\n\n')
+    temporal_difference_learning.demo()
+    #print('\n\n\nDeep RL\n\n\n')
+    #deep_rl.demo()

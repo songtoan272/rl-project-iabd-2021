@@ -45,7 +45,7 @@ def episodic_semi_gradient_sarsa_on_grid_world():
     gamma = 0.9
     epsilon = 0.2
     model_name = 'episodic_semi_gradient_sarsa_grid_world'
-    nn = get_episodic_semi_gradient_sarsa(grid_world, gamma, epislon, max_iter, q, model_name)
+    nn = get_episodic_semi_gradient_sarsa(grid_world, gamma, epsilon, max_iter, q, model_name)
     drl_sample_project_python.main.save_neural_net(nn, model_name)
 
 
@@ -53,13 +53,16 @@ def episodic_semi_gradient_sarsa_on_tic_tac_toe():
     q = tf.keras.Sequential([
         tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh,
                               input_dim=(tic_tac_toe.state_description_length() + tic_tac_toe.max_actions_count())),
+        tf.keras.layers.Dense(128, activation=tf.keras.activations.tanh),
+        tf.keras.layers.Dense(256, activation=tf.keras.activations.tanh),
         tf.keras.layers.Dense(64, activation=tf.keras.activations.tanh),
+        tf.keras.layers.Dense(128, activation=tf.keras.activations.tanh),
         tf.keras.layers.Dense(1, activation=tf.keras.activations.linear),
     ])
     q.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.mse)
 
     gamma = 0.9
-    epsilon = 0.6
+    epsilon = 1.0
     model_name = 'episodic_semi_gradient_sarsa_tic_tac_toe'
     nn = get_episodic_semi_gradient_sarsa(tic_tac_toe, gamma, epsilon, max_iter, q, model_name)
     drl_sample_project_python.main.save_neural_net(nn, model_name)
@@ -133,12 +136,12 @@ def demo():
     #episodic_semi_gradient_sarsa_on_grid_world()
     #print('\n\nEpisodic semi gradient sarsa : Tic Tac Toe\n')
     #episodic_semi_gradient_sarsa_on_tic_tac_toe()
-    #print('\n\nEpisodic semi gradient sarsa : Pac Man\n')
-    #episodic_semi_gradient_sarsa_on_pac_man()
+    print('\n\nEpisodic semi gradient sarsa : Pac Man\n')
+    episodic_semi_gradient_sarsa_on_pac_man()
 
     #print('\n\nDeep Q-Learning : Line World\n')
     #deep_q_learning_line_world()
     #print('\n\nDeep Q-Learning : Grid World\n')
     #deep_q_learning_grid_world()
-    print('\n\nDeep Q-Learning : Tic Tac Toe\n')
-    deep_q_learning_tic_tact_toe()
+    #print('\n\nDeep Q-Learning : Tic Tac Toe\n')
+    #deep_q_learning_tic_tact_toe()

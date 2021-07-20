@@ -50,16 +50,10 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
 
         if r0 == 3 or r1 == 3 or r2 == 3 or c0 == 3 or c1 == 3 or c2 == 3 or d0 == 3 or d1 == 3:
             self.game_over = True
-            self.current_score += 10.0
+            self.current_score = 1.0
             return
 
-        """
-        if r0 == 21 or r1 == 21 or r2 == 21 or c0 == 21 or c1 == 21 or c2 == 21 or d0 == 21 or d1 == 21:
-            self.current_score += 1.0
-        """
-
         if board_full:
-            self.current_score = -1.0
             self.game_over = True
             return
 
@@ -85,7 +79,7 @@ class EnvTicTacToeSingleAgent(SingleAgentEnv):
 
         if r0 == 30 or r1 == 30 or r2 == 30 or c0 == 30 or c1 == 30 or c2 == 30 or d0 == 30 or d1 == 30:
             self.game_over = True
-            self.current_score = -5.0
+            self.current_score = -1.0
             return
 
         board_full = True

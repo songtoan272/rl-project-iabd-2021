@@ -9,8 +9,8 @@ from drl_sample_project_python.algos.off_policy_monte_carlo_control import off_p
 from drl_sample_project_python.algos.on_policy_first_visit_monte_carlo_control import on_policy_first_visit_monte_carlo_control
 
 
-max_iter = 300000
-nb_generation = 5
+max_iter = 20000
+nb_generation = 0
 tic_tac_toe = EnvTicTacToeSingleAgent(200)
 secret_env = Env2()
 
@@ -24,7 +24,7 @@ def monte_carlo_es_on_tic_tac_toe_solo() -> PolicyAndActionValueFunction:
     result = monte_carlo_es(tic_tac_toe, 0.9999, max_iter)
     for _ in range(0, nb_generation):
         result = monte_carlo_es(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_tic_tac_toe')
+    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_tic_tac_toe', result.q)
     return result
 
 
@@ -39,7 +39,7 @@ def on_policy_first_visit_monte_carlo_control_on_tic_tac_toe_solo() -> PolicyAnd
     result = on_policy_first_visit_monte_carlo_control(tic_tac_toe, 0.9999, 0.1, max_iter)
     for _ in range(0, nb_generation):
         result = on_policy_first_visit_monte_carlo_control(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, 0.1, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_tic_tac_toe')
+    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_tic_tac_toe', result.q)
     return result
 
 
@@ -53,7 +53,7 @@ def off_policy_monte_carlo_control_on_tic_tac_toe_solo() -> PolicyAndActionValue
     result = off_policy_monte_carlo_control(tic_tac_toe, 0.9999, max_iter)
     for _ in range(0, nb_generation):
         result = off_policy_monte_carlo_control(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_tic_tac_toe')
+    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_tic_tac_toe', result.q)
     return result
 
 
@@ -64,7 +64,7 @@ def monte_carlo_es_on_secret_env2() -> PolicyAndActionValueFunction:
     Returns the Optimal Policy (Pi(s,a)) and its Action-Value function (Q(s,a))
     """
     result = monte_carlo_es(secret_env, 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_secret_env_2')
+    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_secret_env_2', result.q)
     return result
 
 
@@ -76,7 +76,7 @@ def on_policy_first_visit_monte_carlo_control_on_secret_env2() -> PolicyAndActio
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
     result = on_policy_first_visit_monte_carlo_control(secret_env, 0.9999, 0.1, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_secret_env_2')
+    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_secret_env_2', result.q)
     return result
 
 
@@ -88,38 +88,38 @@ def off_policy_monte_carlo_control_on_secret_env2() -> PolicyAndActionValueFunct
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
     result = off_policy_monte_carlo_control(secret_env, 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_secret_env_2')
+    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_secret_env_2', result.q)
     return result
 
 
 def monte_carlo_es_line_world():
     result = monte_carlo_es(EnvLineWorldSingleAgent(7, 1000), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_line_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_line_world', result.q)
 
 
 def on_policy_first_visit_monte_carlo_control_on_line_world():
     result = on_policy_first_visit_monte_carlo_control(EnvLineWorldSingleAgent(7, 1000), 0.9999, 0.1, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_line_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_line_world', result.q)
 
 
 def off_policy_monte_carlo_control_on_line_world():
     result = off_policy_monte_carlo_control(EnvLineWorldSingleAgent(7, 1000), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_line_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_line_world', result.q)
 
 
 def monte_carlo_es_grid_world():
     result = monte_carlo_es(EnvGridWorldSingleAgent(5, 5, 1000, (4, 4), (0, 0)), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_grid_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_grid_world', result.q)
 
 
 def on_policy_first_visit_monte_carlo_control_on_grid_world():
     result = on_policy_first_visit_monte_carlo_control(EnvGridWorldSingleAgent(5, 5, 1000, (4, 4), (0, 0)), 0.9999, 0.1, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_grid_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_grid_world', result.q)
 
 
 def off_policy_monte_carlo_control_on_grid_world():
     result = off_policy_monte_carlo_control(EnvGridWorldSingleAgent(5, 5, 1000, (4, 4), (0, 0)), 0.9999, max_iter)
-    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_grid_world')
+    drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_grid_world', result.q)
 
 def demo():
     print('\n\nMonte Carlo ES : Tic Tac Toe\n')

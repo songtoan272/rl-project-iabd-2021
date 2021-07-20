@@ -6,11 +6,10 @@ import tensorflow as tf
 import numpy as np
 
 
-def get_episodic_semi_gradient_sarsa(env: DeepSingleAgentEnv, gamma: float, epislon: float,
+def get_episodic_semi_gradient_sarsa(env: DeepSingleAgentEnv, gamma: float, epsilon: float,
                                      max_iters: int, neural_net, model_name: str):
     state_description_length = env.state_description_length()
     max_actions_count = env.max_actions_count()
-    epsilon = 1.0
 
     scores = []
     average = 0.0
@@ -75,7 +74,6 @@ def get_episodic_semi_gradient_sarsa(env: DeepSingleAgentEnv, gamma: float, epis
             neural_net.train_on_batch(np.array([q_inputs]), np.array([target]))
 
         average = (average * iters + env.score()) / (iters + 1)
-        #print(average)
         iters += 1
 
         if episode_id % scale == 0:

@@ -1,3 +1,4 @@
+import copy
 import operator
 import random
 import numpy as np
@@ -50,10 +51,6 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
             self.current_score = 1.0
             return
 
-        """
-        if r0 == 21 or r1 == 21 or r2 == 21 or c0 == 21 or c1 == 21 or c2 == 21 or d0 == 21 or d1 == 21:
-            self.current_score += 1.0
-        """
 
         if board_full:
             self.game_over = True
@@ -189,4 +186,4 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
         self.always_random = False
 
     def set_state(self, state):
-        self.board = state
+        self.board = copy.deepcopy(state)

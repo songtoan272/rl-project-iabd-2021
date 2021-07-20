@@ -106,6 +106,7 @@ def value_iteration_on_secret_env1() -> PolicyAndValueFunction:
 
 
 def demo():
+    """
     print('\n\nPolicy evaluation : Line World\n')
     print(policy_evaluation_on_line_world())
     print('\n\nPolicy iteration : Line World\n')
@@ -126,3 +127,5 @@ def demo():
     print(policy_iteration_on_secret_env1())
     print('\n\nValue iteration : Secret Env 1\n')
     print(value_iteration_on_secret_env1())
+    """
+    pass

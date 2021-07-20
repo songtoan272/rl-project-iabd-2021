@@ -27,18 +27,41 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
             else:
                 r[n] = ord(b)
             i = n
+        m = 1
+        for g in self.ghosts:
+            if g != -100:
+                r[i + m] = g
+                m += 1
+        return r / max(122, len(self.board))
+
+    def state_description_ui(self) -> np.ndarray:
+        r = np.zeros(len(self.board) + len(self.ghosts))
+        i = 0
+        for n, b in enumerate(self.board):
+            if b.isnumeric():
+                r[n] = int(b)
+            else:
+                r[n] = ord(b)
+            i = n
         for m, g in enumerate(self.ghosts):
-            r[i + m] = g
+            r[i + m + 1] = g
         return r
 
     def state_description_length(self) -> int:
-        return len(self.board) + len(self.ghosts)
+        i = 0
+        for g in self.ghosts:
+            if g != -100:
+                i += 1
+        return len(self.board) + i
 
     def max_actions_count(self) -> int:
         return 4
 
     def is_game_over(self) -> bool:
         return self.game_over
+
+    def get_pacgum_count(self):
+        return self.pacgum_count
 
     def act_with_action_id(self, action_id: int):
         assert (not self.game_over)
@@ -65,7 +88,7 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
                 new_pos = self.find_wrapper_exit(self.board[self.agent_pos + self.cols], self.agent_pos + self.cols) + self.cols
 
         if new_pos in self.ghosts:
-            self.current_score -= 1000
+            self.current_score = -1
             self.game_over = True
             return
 
@@ -80,7 +103,6 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
 
         if self.current_pacgum == self.pacgum_count:
             self.game_over = True
-            self.current_score += 1000
 
         if self.current_step == self.max_steps:
             self.game_over = True
@@ -112,7 +134,7 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
             self.ghosts[x] = ghost_pos
             if self.board[ghost_pos] == '2':
                 self.game_over = True
-                self.current_score -= 1000
+                self.current_score = -1
                 break
 
     def get_action_available(self, x: int) -> np.ndarray:
@@ -167,6 +189,8 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
     def move_pac_man(self, x: int):
         self.board[self.agent_pos] = '0'
         self.agent_pos = x
+        if self.board[x] == '1':
+            self.pacgum_count -= 1
         self.board[x] = '2'
 
     def get_ghosts(self):
