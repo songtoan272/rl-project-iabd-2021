@@ -9,8 +9,7 @@ from drl_sample_project_python.algos.off_policy_monte_carlo_control import off_p
 from drl_sample_project_python.algos.on_policy_first_visit_monte_carlo_control import on_policy_first_visit_monte_carlo_control
 
 
-max_iter = 20000
-nb_generation = 0
+max_iter = 100000
 tic_tac_toe = EnvTicTacToeSingleAgent(200)
 secret_env = Env2()
 
@@ -22,8 +21,6 @@ def monte_carlo_es_on_tic_tac_toe_solo() -> PolicyAndActionValueFunction:
     Returns the Optimal Policy (Pi(s,a)) and its Action-Value function (Q(s,a))
     """
     result = monte_carlo_es(tic_tac_toe, 0.9999, max_iter)
-    for _ in range(0, nb_generation):
-        result = monte_carlo_es(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, max_iter)
     drl_sample_project_python.main.export_to_json(result.pi, 'monte_carlo_es_tic_tac_toe', result.q)
     return result
 
@@ -37,8 +34,6 @@ def on_policy_first_visit_monte_carlo_control_on_tic_tac_toe_solo() -> PolicyAnd
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
     result = on_policy_first_visit_monte_carlo_control(tic_tac_toe, 0.9999, 0.1, max_iter)
-    for _ in range(0, nb_generation):
-        result = on_policy_first_visit_monte_carlo_control(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, 0.1, max_iter)
     drl_sample_project_python.main.export_to_json(result.pi, 'on_policy_monte_carlo_tic_tac_toe', result.q)
     return result
 
@@ -51,8 +46,6 @@ def off_policy_monte_carlo_control_on_tic_tac_toe_solo() -> PolicyAndActionValue
     Experiment with different values of hyper parameters and choose the most appropriate combination
     """
     result = off_policy_monte_carlo_control(tic_tac_toe, 0.9999, max_iter)
-    for _ in range(0, nb_generation):
-        result = off_policy_monte_carlo_control(EnvTicTacToeSingleAgent(100, second_pi=result.pi), 0.9999, max_iter)
     drl_sample_project_python.main.export_to_json(result.pi, 'off_policy_monte_carlo_tic_tac_toe', result.q)
     return result
 

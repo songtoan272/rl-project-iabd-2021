@@ -1,20 +1,19 @@
 import copy
-import time
 import tkinter as tk
 import json
-import random
 from tkinter import messagebox
-from tkinter import ttk
 
 import numpy as np
 from PIL import Image, ImageTk
 import tensorflow as tf
+import os
 
 import drl_sample_project_python.envs.env_line_world_deep_single_agent as lw_deep
 import drl_sample_project_python.envs.env_grid_world_deep_single_agent as gw_deep
 import drl_sample_project_python.envs.env_tictactoe_deep_single_agent as ttt_deep
 import drl_sample_project_python.envs.env_pac_man_deep_single_agent as pm_deep
 
+tf.config.set_visible_devices([], 'GPU')
 FONT = 'Comic Sans MS'
 
 GAMES = [('Line World', 1), ('Grid World', 2), ('Tic Tac Toe', 3), ('Pac-Man (Small custom)', 4),
@@ -48,36 +47,36 @@ def load_neuralnet(game: int, algo: int):
         elif algo == 10:
             file_name = 'deep_q_learning_line_world'
         elif algo == 11:
-            file_name = ''
+            file_name = 'reinforce_monte_carlo_line_world'
         elif algo == 12:
-            file_name = ''
+            file_name = 'reinforce_with_baseline_line_world'
     elif game == 2:
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_grid_world'
         elif algo == 10:
             file_name = 'deep_q_learning_grid_world'
         elif algo == 11:
-            file_name = ''
+            file_name = 'reinforce_monte_carlo_grid_world'
         elif algo == 12:
-            file_name = ''
+            file_name = 'reinforce_with_baseline_grid_world'
     elif game == 3:
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_tic_tac_toe'
         elif algo == 10:
             file_name = 'deep_q_learning_tic_tac_toe'
         elif algo == 11:
-            file_name = ''
+            file_name = 'reinforce_monte_carlo_tic_tac_toe'
         elif algo == 12:
-            file_name = ''
+            file_name = 'reinforce_with_baseline_tic_tac_toe'
     elif game in (4, 5, 6, 7):
         if algo == 9:
             file_name = 'episodic_semi_gradient_sarsa_pac_man'
         elif algo == 10:
             file_name = 'deep_q_learning_pac_man'
         elif algo == 11:
-            file_name = ''
+            file_name = 'reinforce_monte_carlo_pac_man'
         elif algo == 12:
-            file_name = ''
+            file_name = 'reinforce_with_baseline_pac_man'
 
     if game == 4:
         file_name += '_small_custom'
@@ -93,22 +92,31 @@ def load_neuralnet(game: int, algo: int):
     return nerual_net
 
 
-def predict_model(neural_net, env) -> int:
-    all_q_value = np.squeeze(predict_model_all_q_value(neural_net, env))
+def predict_model(neural_net, env, algo) -> int:
+    all_q_value = predict_model_all_q_value(neural_net, env, algo)
     return env.available_actions_ids()[np.argmax(all_q_value)]
 
 
-def predict_model_all_q_value(neural_net, env):
-    all_q_inputs = np.zeros((len(env.available_actions_ids()),
-                             env.state_description_length() + env.max_actions_count()))
-    for i, a in enumerate(env.available_actions_ids()):
-        all_q_inputs[i] = np.hstack(
-            [env.state_description(), tf.keras.utils.to_categorical(a, env.max_actions_count())])
-    all_q_value = neural_net.predict(all_q_inputs)
+def predict_model_all_q_value(neural_net, env, algo):
+    if algo not in (11, 12):
+        all_q_inputs = np.zeros((len(env.available_actions_ids()),
+                                 env.state_description_length() + env.max_actions_count()))
+        for i, a in enumerate(env.available_actions_ids()):
+            all_q_inputs[i] = np.hstack(
+                [env.state_description(), tf.keras.utils.to_categorical(a, env.max_actions_count())])
+        all_q_value = neural_net.predict(all_q_inputs)
+    else:
+        all_q_inputs = env.state_description()
+        available_actions = env.available_actions_ids()
+        all_q_value = neural_net.predict(all_q_inputs.reshape(-1, len(all_q_inputs)))[0]
+        masked_q_value = []
+        for a in available_actions:
+            masked_q_value.append(all_q_value[a])
+        all_q_value = np.array(masked_q_value)
     return all_q_value
 
 
-def import_json(game: int, algo: int):
+def get_file_name(game: int, algo: int):
     file_name = ''
     if game == 1:
         if algo == 1:
@@ -127,6 +135,14 @@ def import_json(game: int, algo: int):
             file_name = 'q_learning_line_world'
         elif algo == 8:
             file_name = 'expected_sarsa_line_world'
+        elif algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_line_world'
+        elif algo == 10:
+            file_name = 'deep_q_learning_line_world'
+        elif algo == 11:
+            file_name = 'reinforce_monte_carlo_line_world'
+        elif algo == 12:
+            file_name = 'reinforce_with_baseline_line_world'
     elif game == 2:
         if algo == 1:
             file_name = 'policy_iteration_grid_world'
@@ -144,6 +160,14 @@ def import_json(game: int, algo: int):
             file_name = 'q_learning_grid_world'
         elif algo == 8:
             file_name = 'expected_sarsa_grid_world'
+        elif algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_grid_world'
+        elif algo == 10:
+            file_name = 'deep_q_learning_grid_world'
+        elif algo == 11:
+            file_name = 'reinforce_monte_carlo_grid_world'
+        elif algo == 12:
+            file_name = 'reinforce_with_baseline_grid_world'
     elif game == 3:
         if algo == 3:
             file_name = 'monte_carlo_es_tic_tac_toe'
@@ -157,6 +181,29 @@ def import_json(game: int, algo: int):
             file_name = 'q_learning_tic_tac_toe'
         elif algo == 8:
             file_name = 'expected_sarsa_tic_tac_toe'
+        elif algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_tic_tac_toe'
+        elif algo == 10:
+            file_name = 'deep_q_learning_tic_tac_toe'
+        elif algo == 11:
+            file_name = 'reinforce_monte_carlo_tic_tac_toe'
+        elif algo == 12:
+            file_name = 'reinforce_with_baseline_tic_tac_toe'
+    elif game == 4:
+        if algo == 9:
+            file_name = 'episodic_semi_gradient_sarsa_pac_man'
+        elif algo == 10:
+            file_name = 'deep_q_learning_pac_man'
+        elif algo == 11:
+            file_name = 'reinforce_monte_carlo_pac_man'
+        elif algo == 12:
+            file_name = 'reinforce_with_baseline_pac_man'
+
+    return file_name
+
+
+def import_json(game: int, algo: int):
+    file_name = get_file_name(game, algo)
     f = open('./models/' + file_name + '.json', 'r')
     data = json.load(f)
     f.close()
@@ -165,54 +212,25 @@ def import_json(game: int, algo: int):
 
 
 def import_json_q(game: int, algo: int):
-    file_name = ''
-    if game == 1:
-        if algo == 3:
-            file_name = 'monte_carlo_es_line_world_q'
-        elif algo == 4:
-            file_name = 'on_policy_monte_carlo_line_world_q'
-        elif algo == 5:
-            file_name = 'off_policy_monte_carlo_line_world_q'
-        elif algo == 6:
-            file_name = 'sarsa_line_world_q'
-        elif algo == 7:
-            file_name = 'q_learning_line_world_q'
-        elif algo == 8:
-            file_name = 'expected_sarsa_line_world_q'
-    elif game == 2:
-        if algo == 3:
-            file_name = 'monte_carlo_es_grid_world_q'
-        elif algo == 4:
-            file_name = 'on_policy_monte_carlo_grid_world_q'
-        elif algo == 5:
-            file_name = 'off_policy_monte_carlo_grid_world_q'
-        elif algo == 6:
-            file_name = 'sarsa_grid_world_q'
-        elif algo == 7:
-            file_name = 'q_learning_grid_world_q'
-        elif algo == 8:
-            file_name = 'expected_sarsa_grid_world_q'
-    elif game == 3:
-        if algo == 3:
-            file_name = 'monte_carlo_es_tic_tac_toe_q'
-        elif algo == 4:
-            file_name = 'on_policy_monte_carlo_tic_tac_toe_q'
-        elif algo == 5:
-            file_name = 'off_policy_monte_carlo_tic_tac_toe_q'
-        elif algo == 6:
-            file_name = 'sarsa_tic_tac_toe_q'
-        elif algo == 7:
-            file_name = 'q_learning_tic_tac_toe_q'
-        elif algo == 8:
-            file_name = 'expected_sarsa_tic_tac_toe_q'
-
+    file_name = get_file_name(game, algo)
     if file_name == '':
         return {}
+    file_name += '_q'
     f = open('./models/' + file_name + '.json', 'r')
     data = json.load(f)
     f.close()
 
     return data
+
+
+def import_curve_name(game: int, algo: int):
+    file_name = get_file_name(game, algo)
+    if file_name == '':
+        return ''
+    file_name += '_curve.png'
+    if os.path.isfile('./models/' + file_name):
+        return file_name
+    return ''
 
 
 def pac_man(algo: int, canvas, game):
@@ -225,11 +243,10 @@ def pac_man(algo: int, canvas, game):
         env_pac_man[0] = pm_deep.EnvPacManDeepSingleAgent(100, './models/pac_man_level_custom_3.txt')
     elif game == 7:
         env_pac_man[0] = pm_deep.EnvPacManDeepSingleAgent(100, './models/pac_man_level_1.txt')
-
     board = []
     ghosts = []
     env_pac_man[0].reset()
-    board, rows, cols, pacgum_count, ghosts = env_pac_man[0].init_board()
+    board, rows, cols, ghosts = env_pac_man[0].init_board()
     initial_board = copy.deepcopy(board)
 
     wrapper = {}
@@ -300,8 +317,8 @@ def pac_man(algo: int, canvas, game):
         LABELS[1].config(text='')
         LABELS[2].config(text='')
         LABELS[3].config(text='')
-        neural_net = load_neuralnet(4, algo)
-        all_q_value = predict_model_all_q_value(neural_net, env_pac_man[0]).flatten()
+        neural_net = load_neuralnet(game, algo)
+        all_q_value = predict_model_all_q_value(neural_net, env_pac_man[0], algo).flatten()
         for i, a in enumerate(env_pac_man[0].available_actions_ids()):
             LABELS[a].config(text=round(all_q_value[i], 4))
 
@@ -369,9 +386,9 @@ def pac_man(algo: int, canvas, game):
             create_line()
 
     def simulate():
-        neural_net = load_neuralnet(4, algo)
+        neural_net = load_neuralnet(game, algo)
         env_pac_man[0].set_state(np.array(board).flatten())
-        action = predict_model(neural_net, env_pac_man[0])
+        action = predict_model(neural_net, env_pac_man[0], algo)
         env_pac_man[0].act_with_action_id(action)
         b = env_pac_man[0].state_description_ui()[:-4]
         for n, s in enumerate(b):
@@ -477,7 +494,7 @@ def tic_tac_toe(algo: int, canvas):
                     TTT_LABELS[8].config(text=round(q_value['8'], 4))
         elif algo > 8:
             neural_net = load_neuralnet(3, algo)
-            all_q_value = predict_model_all_q_value(neural_net, env_tic_tact_toe).flatten()
+            all_q_value = predict_model_all_q_value(neural_net, env_tic_tact_toe, algo).flatten()
             for i, a in enumerate(env_tic_tact_toe.available_actions_ids()):
                 TTT_LABELS[a].config(text=round(all_q_value[i], 4))
 
@@ -487,11 +504,6 @@ def tic_tac_toe(algo: int, canvas):
         canvas.create_line(5, 205, 305, 205)
         canvas.create_line(105, 5, 105, 305)
         canvas.create_line(205, 5, 205, 305)
-
-        canvas.create_line(505, 105, 805, 105)
-        canvas.create_line(505, 205, 805, 205)
-        canvas.create_line(605, 5, 605, 305)
-        canvas.create_line(705, 5, 705, 305)
 
         canvas_places = (620, 310)
 
@@ -549,7 +561,7 @@ def tic_tac_toe(algo: int, canvas):
             if algo > 8:
                 neural_net = load_neuralnet(3, algo)
                 env_tic_tact_toe.set_state(np.array(board).flatten())
-                action = predict_model(neural_net, env_tic_tact_toe)
+                action = predict_model(neural_net, env_tic_tact_toe, algo)
                 env_tic_tact_toe.act_with_action_id(action)
             else:
                 json_data = import_json(3, algo)
@@ -615,7 +627,7 @@ def grid_world(algo: int, canvas):
                     LABELS[3].config(text=round(q_value['3'], 4))
         elif algo > 8:
             neural_net = load_neuralnet(2, algo)
-            all_q_value = predict_model_all_q_value(neural_net, env_grid_world).flatten()
+            all_q_value = predict_model_all_q_value(neural_net, env_grid_world, algo).flatten()
             for i, a in enumerate(env_grid_world.available_actions_ids()):
                 LABELS[a].config(text=round(all_q_value[i], 4))
 
@@ -653,7 +665,7 @@ def grid_world(algo: int, canvas):
             if (i == 0 and j == 0) or (i == 4 and j == 4):
                 return
             set_start_position(i, j)
-            env_grid_world.set_state(i * 5 + j)
+            env_grid_world.set_state(j * 5 + i)
             create_line()
 
     def simulate():
@@ -669,7 +681,7 @@ def grid_world(algo: int, canvas):
         if algo > 8:
             neural_net = load_neuralnet(2, algo)
             env_grid_world.set_state(n)
-            action = predict_model(neural_net, env_grid_world)
+            action = predict_model(neural_net, env_grid_world, algo)
             env_grid_world.act_with_action_id(action)
         else:
             json_data = import_json(2, algo)
@@ -731,7 +743,7 @@ def line_world(algo: int, canvas):
                     LABELS[1].config(text=round(q_value['1'], 4))
         elif algo > 8:
             neural_net = load_neuralnet(1, algo)
-            all_q_value = predict_model_all_q_value(neural_net, env_line_world).flatten()
+            all_q_value = predict_model_all_q_value(neural_net, env_line_world, algo).flatten()
             for i, a in enumerate(env_line_world.available_actions_ids()):
                 LABELS[a].config(text=round(all_q_value[i], 4))
 
@@ -777,7 +789,7 @@ def line_world(algo: int, canvas):
         if algo > 8:
             neural_net = load_neuralnet(1, algo)
             env_line_world.set_state(n)
-            action = predict_model(neural_net, env_line_world)
+            action = predict_model(neural_net, env_line_world, algo)
             env_line_world.act_with_action_id(action)
         else:
             json_data = import_json(1, algo)
@@ -832,6 +844,19 @@ def validate(game: int, algo: int, canvas):
         messagebox.showinfo("Erreur", "Ce couple jeu/algorithme n'est pas disponible")
         return
 
+    curve_file = import_curve_name(game, algo)
+    if curve_file != '':
+        curve = Image.open('./models/' + curve_file)
+        curve.thumbnail((375, 375), Image.ANTIALIAS)
+        tkinter_curve = ImageTk.PhotoImage(curve)
+        curve_canvas = tk.Canvas(width=375, height=375, highlightthickness=0)
+        curve_canvas.pack()
+        curve_canvas.place(x=1175, y=530)
+        curve_canvas.create_image(0, 0, image=tkinter_curve, anchor=tk.NW)
+        curve_label = tk.Label(width=375, height=375, image=tkinter_curve)
+        curve_label.image = tkinter_curve
+        CANVAS.append(curve_canvas)
+
     if algo > 2:
         if game != 3:
             gamepad = Image.open('./models/gamepad_control.png')
@@ -839,7 +864,7 @@ def validate(game: int, algo: int, canvas):
             tkinter_gamepad = ImageTk.PhotoImage(gamepad)
             gamepad_canvas = tk.Canvas(width=100, height=100, highlightthickness=0)
             gamepad_canvas.pack()
-            gamepad_canvas.place(x=1300, y=410)
+            gamepad_canvas.place(x=1300, y=210)
             gamepad_canvas.create_image(0, 0, image=tkinter_gamepad, anchor=tk.NW)
             gamepad_label = tk.Label(width=100, height=100, image=tkinter_gamepad)
             gamepad_label.image = tkinter_gamepad
@@ -847,67 +872,77 @@ def validate(game: int, algo: int, canvas):
 
             lb_left = tk.Label(text="")
             lb_left.config(font=(FONT, '12'))
-            lb_left.place(x=1220, y=442)
+            lb_left.place(x=1220, y=242)
             LABELS.append(lb_left)
 
             lb_right = tk.Label(text="")
             lb_right.config(font=(FONT, '12'))
-            lb_right.place(x=1420, y=442)
+            lb_right.place(x=1420, y=242)
             LABELS.append(lb_right)
 
             lb_up = tk.Label(text="")
             lb_up.config(font=(FONT, '12'))
-            lb_up.place(x=1325, y=370)
+            lb_up.place(x=1325, y=170)
             LABELS.append(lb_up)
 
             lb_down = tk.Label(text="")
             lb_down.config(font=(FONT, '12'))
-            lb_down.place(x=1325, y=520)
+            lb_down.place(x=1325, y=320)
             LABELS.append(lb_down)
         else:
+            ttt_canvas = tk.Canvas(width=310, height=310, highlightthickness=0)
+            ttt_canvas.pack()
+            ttt_canvas.place(x=1120, y=110)
+            CANVAS.append(ttt_canvas)
+
+            ttt_canvas.create_line(5, 105, 305, 105)
+            ttt_canvas.create_line(5, 205, 305, 205)
+            ttt_canvas.create_line(105, 5, 105, 305)
+            ttt_canvas.create_line(205, 5, 205, 305)
+
             lb_1 = tk.Label(text="")
             lb_1.config(font=(FONT, '12'))
-            lb_1.place(x=1140, y=350)
+            lb_1.place(x=1140, y=150)
             TTT_LABELS.append(lb_1)
 
             lb_2 = tk.Label(text="")
             lb_2.config(font=(FONT, '12'))
-            lb_2.place(x=1240, y=350)
+            lb_2.place(x=1240, y=150)
             TTT_LABELS.append(lb_2)
 
             lb_3 = tk.Label(text="")
             lb_3.config(font=(FONT, '12'))
-            lb_3.place(x=1340, y=350)
+            lb_3.place(x=1340, y=150)
             TTT_LABELS.append(lb_3)
 
             lb_4 = tk.Label(text="")
             lb_4.config(font=(FONT, '12'))
-            lb_4.place(x=1140, y=450)
+            lb_4.place(x=1140, y=250)
             TTT_LABELS.append(lb_4)
 
             lb_5 = tk.Label(text="")
             lb_5.config(font=(FONT, '12'))
-            lb_5.place(x=1240, y=450)
+            lb_5.place(x=1240, y=250)
             TTT_LABELS.append(lb_5)
 
             lb_6 = tk.Label(text="")
             lb_6.config(font=(FONT, '12'))
-            lb_6.place(x=1340, y=450)
+            lb_6.place(x=1340, y=250)
             TTT_LABELS.append(lb_6)
 
             lb_7 = tk.Label(text="")
             lb_7.config(font=(FONT, '12'))
-            lb_7.place(x=1140, y=550)
+            lb_7.place(x=1140, y=350)
             TTT_LABELS.append(lb_7)
 
             lb_8 = tk.Label(text="")
             lb_8.config(font=(FONT, '12'))
-            lb_8.place(x=1240, y=550)
+            lb_8.place(x=1240, y=350)
             TTT_LABELS.append(lb_8)
 
             lb_9 = tk.Label(text="")
             lb_9.config(font=(FONT, '12'))
-            lb_9.place(x=1340, y=550)
+            lb_9.place(x=1340, y=350)
             TTT_LABELS.append(lb_9)
 
     if game == 1:

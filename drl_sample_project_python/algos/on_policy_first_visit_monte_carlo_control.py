@@ -25,6 +25,7 @@ def on_policy_first_visit_monte_carlo_control(
 
     for _ in tqdm(range(max_iter)):
         env.reset_random()
+        eps = max(.02, eps * .999985)
 
         S = []
         A = []

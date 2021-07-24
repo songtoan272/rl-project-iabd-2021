@@ -14,7 +14,13 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
         self.reset()
 
     def state_description(self) -> np.ndarray:
-        return np.array(self.board)
+        r = []
+        for b in self.board:
+            if b == 10:
+                r.append(0.5)
+            else:
+                r.append(b)
+        return np.array(r)
 
     def state_description_length(self) -> int:
         return len(self.board)
@@ -139,11 +145,19 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
     
     def is_valid_board(self) -> bool:
         have_places = False
+        cross = 0
+        circle = 0
         for i in range(len(self.board)):
             if self.board[i] == 0:
                 have_places = True
+            elif self.board[i] == 1:
+                cross += 1
+            elif self.board[i] == 10:
+                circle += 1
 
         if not have_places:
+            return False
+        if circle != cross:
             return False
 
         r0 = self.board[0] + self.board[1] + self.board[2]
@@ -167,16 +181,6 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
     def reset_random(self):
         self.reset()
         self.always_random = True
-        """
-        playable_board = False
-        while not playable_board:
-            playable_board = True
-            for s in range(0, random.randint(0, 5)):
-                if not self.game_over:
-                    self.act_with_action_id(random.choice(self.available_actions_ids()))
-                else:
-                    playable_board = False
-        """
         first = True
         while not self.is_valid_board() or first:
             first = False
@@ -187,3 +191,4 @@ class EnvTicTacToeDeepSingleAgent(DeepSingleAgentEnv):
 
     def set_state(self, state):
         self.board = copy.deepcopy(state)
+

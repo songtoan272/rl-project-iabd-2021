@@ -1,4 +1,5 @@
 import copy
+import random
 
 import numpy as np
 from drl_sample_project_python.do_not_touch.contracts import DeepSingleAgentEnv
@@ -8,7 +9,7 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
     def __init__(self, max_steps: int, level_file: str):
         self.filename = level_file
         self.max_steps = max_steps
-        self.board, self.rows, self.cols, self.pacgum_count, self.ghosts = self.init_board()
+        self.board, self.rows, self.cols, self.ghosts = self.init_board()
         self.initial_board = copy.deepcopy(self.board)
         self.initial_ghosts = copy.deepcopy(self.ghosts)
         self.current_step = 0
@@ -32,7 +33,7 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
             if g != -100:
                 r[i + m] = g
                 m += 1
-        return r / max(122, len(self.board))
+        return r / max(max(r), len(self.board))
 
     def state_description_ui(self) -> np.ndarray:
         r = np.zeros(len(self.board) + len(self.ghosts))
@@ -81,11 +82,13 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
         elif action_id == 2:
             new_pos = self.agent_pos - self.cols
             if not self.board[self.agent_pos - self.cols].isnumeric():
-                new_pos = self.find_wrapper_exit(self.board[self.agent_pos - self.cols], self.agent_pos - self.cols) - self.cols
+                new_pos = self.find_wrapper_exit(self.board[self.agent_pos - self.cols],
+                                                 self.agent_pos - self.cols) - self.cols
         elif action_id == 3:
             new_pos = self.agent_pos + self.cols
             if not self.board[self.agent_pos + self.cols].isnumeric():
-                new_pos = self.find_wrapper_exit(self.board[self.agent_pos + self.cols], self.agent_pos + self.cols) + self.cols
+                new_pos = self.find_wrapper_exit(self.board[self.agent_pos + self.cols],
+                                                 self.agent_pos + self.cols) + self.cols
 
         if new_pos in self.ghosts:
             self.current_score = -1
@@ -178,6 +181,11 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
         self.current_score = 0.0
         self.current_pacgum = 0
 
+        self.pacgum_count = 0
+        for b in self.board:
+            if b == '1':
+                self.pacgum_count += 1
+
         n = 0
         while n < self.rows * self.cols and self.board[n] != '2':
             n += 1
@@ -198,6 +206,20 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
 
     def reset_random(self):
         self.reset()
+        self.board[self.agent_pos] = '0'
+        x = random.randint(0, len(self.board) - 1)
+        while self.board[x] not in ('0', '1'):
+            x = random.randint(0, len(self.board) - 1)
+        if self.board[x] == '1':
+            self.pacgum_count -= 1
+        self.board[x] = 2
+
+        for i, g in enumerate(self.ghosts):
+            if g != -100:
+                x = random.randint(0, len(self.board) - 1)
+                while x != -1 and self.board[x] not in ('0', '1', '2'):
+                    x = random.randint(0, len(self.board) - 1)
+                self.ghosts[i] = x
 
     def set_state(self, state):
         self.board = state
@@ -225,13 +247,11 @@ class EnvPacManDeepSingleAgent(DeepSingleAgentEnv):
                         ghosts[3] = n + rows * cols
                 else:
                     row.append(l)
-                    if l == '1':
-                        nb_pacgum += 1
             board.append(row)
             rows += 1
             line = f.readline().replace('\n', '')
         f.close()
-        return np.array(board).flatten(), rows, cols, nb_pacgum, ghosts
+        return np.array(board).flatten(), rows, cols, ghosts
 
     def find_wrapper_exit(self, w: str, n: int) -> int:
         x = 0

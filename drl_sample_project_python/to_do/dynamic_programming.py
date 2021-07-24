@@ -106,26 +106,24 @@ def value_iteration_on_secret_env1() -> PolicyAndValueFunction:
 
 
 def demo():
-    """
-    print('\n\nPolicy evaluation : Line World\n')
-    print(policy_evaluation_on_line_world())
-    print('\n\nPolicy iteration : Line World\n')
-    print(policy_iteration_on_line_world())
+    #print('\n\nPolicy evaluation : Line World\n')
+    #print(policy_evaluation_on_line_world())
+    #print('\n\nPolicy iteration : Line World\n')
+    #print(policy_iteration_on_line_world())
     print('\n\nValue iteration : Line World\n')
     print(value_iteration_on_line_world())
 
-    print('\n\nPolicy evaluation : Grid World\n')
-    print(policy_evaluation_on_grid_world())
-    print('\n\nPolicy iteration : Grid World\n')
-    print(policy_iteration_on_grid_world())
-    print('\n\nValue iteration : Grid World\n')
-    print(value_iteration_on_grid_world())
+    #print('\n\nPolicy evaluation : Grid World\n')
+    #print(policy_evaluation_on_grid_world())
+    #print('\n\nPolicy iteration : Grid World\n')
+    #print(policy_iteration_on_grid_world())
+    #print('\n\nValue iteration : Grid World\n')
+    #print(value_iteration_on_grid_world())
 
-    print('\n\nPolicy evaluation : Secret Env 1\n')
-    print(policy_evaluation_on_secret_env1())
-    print('\n\nPolicy iteration : Secret Env 1\n')
-    print(policy_iteration_on_secret_env1())
-    print('\n\nValue iteration : Secret Env 1\n')
-    print(value_iteration_on_secret_env1())
-    """
-    pass
+    #print('\n\nPolicy evaluation : Secret Env 1\n')
+    #print(policy_evaluation_on_secret_env1())
+    #print('\n\nPolicy iteration : Secret Env 1\n')
+    #print(policy_iteration_on_secret_env1())
+    #print('\n\nValue iteration : Secret Env 1\n')
+    #print(value_iteration_on_secret_env1())
+

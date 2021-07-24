@@ -1,17 +1,14 @@
-import random
 import json
 import operator
+import random
+
 import matplotlib.pyplot as plt
 
 import numpy as np
-import tensorflow as tf
-
 import to_do.dynamic_programming as dynamic_programming
-import to_do.monte_carlo_methods as monte_carlo_methods
 import to_do.temporal_difference_learning as temporal_difference_learning
+import to_do.monte_carlo_methods as monte_carlo_methods
 import to_do.deep_rl as deep_rl
-import to_do.chess as chess
-from drl_sample_project_python.envs.env_grid_world_deep_single_agent import EnvGridWorldDeepSingleAgent
 
 
 def export_to_json(pi, file_name: str, q=None):
@@ -34,11 +31,13 @@ def save_neural_net(neural_net, name: str):
     neural_net.save('./models/' + name + '.h5')
 
 
-def plot_scores(name: str, scores, scale):
+def plot_scores(name: str, scores, scale, save=True):
     plt.title(name)
-    plt.xlabel("Iterations")
+    plt.xlabel("Nombre de parties")
     plt.ylabel("Score moyen pour " + str(scale) + " parties")
-    plt.plot(np.arange(1, len(scores) + 1), scores)
+    plt.plot(np.arange(1, len(scores) + 1) * scale, scores)
+    if save:
+        plt.savefig('./models/' + name + '_curve.png')
     plt.show()
 
 
@@ -47,7 +46,8 @@ if __name__ == "__main__":
     #dynamic_programming.demo()
     #print('\n\n\nMonte_carlo\n\n\n')
     #monte_carlo_methods.demo()
-    print('\n\n\nTemporal\n\n\n')
-    temporal_difference_learning.demo()
-    #print('\n\n\nDeep RL\n\n\n')
-    #deep_rl.demo()
+    #print('\n\n\nTemporal\n\n\n')
+    #temporal_difference_learning.demo()
+    print('\n\n\nDeep RL\n\n\n')
+    deep_rl.demo()
+

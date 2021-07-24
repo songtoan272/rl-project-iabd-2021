@@ -6,15 +6,20 @@ from drl_sample_project_python.do_not_touch.contracts import SingleAgentEnv
 from drl_sample_project_python.do_not_touch.result_structures import PolicyAndActionValueFunction
 
 
-def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma: float, max_iter: int, plot_name: str="") -> PolicyAndActionValueFunction:
+def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma: float, max_iter: int, plot_name: str, scale: int=100) -> PolicyAndActionValueFunction:
     assert(epsilon > 0)
 
     pi = {}
     b = {}
     q = {}
 
+    scores = []
+    average = 0.0
+    iters = 0
+
     for it in tqdm(range(max_iter)):
         env.reset()
+        epsilon = max(.02, epsilon * .999985)
 
         while not env.is_game_over():
             s = env.state_id()
@@ -59,6 +64,15 @@ def get_expected_sarsa(env: SingleAgentEnv, alpha: float, epsilon: float, gamma:
                 for a in next_available_action:
                     somme += pi[s_p][a] * q[s_p][a]
                 q[s][chosen_action] += alpha * (r + gamma * somme - q[s][chosen_action])
+
+        average = (average * iters + env.score()) / (iters + 1)
+        iters += 1
+
+        if it % scale == 0 and it != 0:
+            scores.append(average)
+            drl_sample_project_python.main.plot_scores(plot_name, scores, scale)
+            average = 0.0
+            iters = 0
 
     for s in q.keys():
         optimal_a_t = list(q[s].keys())[np.argmax(list(q[s].values()))]
